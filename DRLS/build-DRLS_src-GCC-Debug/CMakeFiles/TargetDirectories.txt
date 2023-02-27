@@ -1,0 +1,4 @@
+/home/fmarkyy98/Documents/Bohóckodós/DRLS/build-DRLS_src-GCC-Debug/CMakeFiles/rebuild_cache.dir
+/home/fmarkyy98/Documents/Bohóckodós/DRLS/build-DRLS_src-GCC-Debug/CMakeFiles/edit_cache.dir
+/home/fmarkyy98/Documents/Bohóckodós/DRLS/build-DRLS_src-GCC-Debug/CMakeFiles/DRLS_src.dir
+/home/fmarkyy98/Documents/Bohóckodós/DRLS/build-DRLS_src-GCC-Debug/CMakeFiles/DRLS_src_autogen.dir
