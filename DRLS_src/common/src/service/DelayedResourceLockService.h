@@ -2,24 +2,20 @@
 
 #include <variant>
 
-#include "common/service/misc/IDelayedResourceLockService.h"
-#include "common/service/misc/IResourceLockService.h"
-#include "lvtn/service/AsyncTaskService.h"
-#include "lvtn/service/ICommonService.h"
-#include "lvtn/utils/TaskManager.h"
-
-#include "combined_common_export.h"
+#include "interface/IDelayedResourceLockService.h"
+#include "interface/IResourceLockService.h"
+#include "AsyncTaskService.h"
+#include "common/src/TaskManager.h"
 
 namespace test {
 class DelayedResourceLockServiceTest;
 }
 namespace common {
 
-class COMBINED_COMMON_EXPORT DelayedResourceLockService
+class DelayedResourceLockService
     : public QObject
     , public common::IDelayedResourceLockService
-    , public lvtn::common::TaskManager<lvtn::common::CancellableOnly>
-    , public lvtn::common::ICommonService 
+    , public common::TaskManager<common::CancellableOnly>
 {
     friend class test::DelayedResourceLockServiceTest;
     Q_OBJECT
@@ -27,7 +23,7 @@ class COMBINED_COMMON_EXPORT DelayedResourceLockService
 public:
     DelayedResourceLockService(
             std::shared_ptr<IResourceLockService> resourceLockService,
-            std::shared_ptr<lvtn::common::AsyncTaskService> asyncTaskService);
+            std::shared_ptr<common::AsyncTaskService> asyncTaskService);
 
     void addAsyncLock(CallerContext context,
                       QMap<LockableResource, ResourceLockType> resources,
@@ -79,7 +75,7 @@ private:
 
 private:
     std::shared_ptr<common::IResourceLockService> resourceLockService_;
-    std::shared_ptr<lvtn::common::AsyncTaskService> asyncTaskService_;
+    std::shared_ptr<common::AsyncTaskService> asyncTaskService_;
 
     QList<std::shared_ptr<AsyncLock>> asyncLocks_;
     std::mutex asyncLocksMutex_;

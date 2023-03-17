@@ -1,10 +1,8 @@
-#include "common/service/common/DelayedResourceLockService.h"
+#include "DelayedResourceLockService.h"
 
-using namespace lvtn;
+#include "utils/Finally.h"
+
 using namespace common;
-
-namespace predor {
-namespace common {
 
 DelayedResourceLockService::DelayedResourceLockService(
         std::shared_ptr<IResourceLockService> resourceLockService,
@@ -74,9 +72,9 @@ void DelayedResourceLockService::onLocksChanged() {
 
     asyncTaskService_
     ->createTask([this, onResourceAvailableCallback, onFailedCallback](auto /*task*/) {
-        auto finInProgress= lvtn::finally([this] { inProgress_ = false; });
+        auto finInProgress= util::finally([this] { inProgress_ = false; });
 
-        auto finHasMissedSignal = lvtn::finally([this] {
+        auto finHasMissedSignal = util::finally([this] {
             if (hasMissedSignal_)
                 onLocksChanged();
         });
@@ -217,9 +215,14 @@ void DelayedResourceLockService::manageAddedAsyncLock(
 }
 
 QString DelayedResourceLockService::logOnFailure(AsyncTaskPtr task) {
-    auto message = APIException::extractFromExceptionPtr(task->getStoredException())->second;
+    QString message;
+    auto exception = task->getStoredException();
+    try {
+        if (exception != nullptr)
+            std::rethrow_exception(exception);
+    } catch (const std::exception& e) {
+        message = e.what();
+    }
+
     return "An Exception has been thrown while executing acquireLocks()\n" + message;
 }
-
-}  // namespace common
-}  // namespace predor
