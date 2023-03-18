@@ -4,6 +4,7 @@
 #include <memory>
 #include <unordered_set>
 #include <set>
+#include <ranges>
 
 #include <QList>
 
@@ -44,25 +45,37 @@ public:
     }
 
     template<typename Entity_T, typename Related_T>
-    const QList<std::shared_ptr<Entity_T>> getRelated(std::shared_ptr<Entity_T> entity) {
+    const QList<std::shared_ptr<Related_T>> getRelatedEntitiesOf(std::shared_ptr<const Entity_T> entity) {
         std::set<int> relatedEntityIdSet;
         if constexpr (std::is_same_v<Entity_T, db::Fruit> &&
                       std::is_same_v<Related_T, db::User>)
         {
-            std::copy_if(fruitUserRelations_.begin(),
-                         fruitUserRelations_.end(),
-                         std::inserter(relatedEntityIdSet, relatedEntityIdSet.begin()),
-                         [entity](std::pair<int, int> relation) {
-                auto [fruitId, userId] = relation;
-                if (entity->getId() == fruitId)
-                        ;
-            });
+            relatedEntityIdSet = fruitUserRelations_
+                                 | std::views::filter([entity](std::pair<int, int> relation) {
+                                       return entity->getId() == relation.first;
+                                   })
+                                 | std::views::transform([](std::pair<int, int> relation) {
+                                       return relation.second;
+                                   });
         }
         if constexpr (std::is_same_v<Entity_T, db::User> &&
                       std::is_same_v<Related_T, db::Fruit>)
         {
-
+            relatedEntityIdSet = fruitUserRelations_
+                                 | std::views::filter([entity](std::pair<int, int> relation) {
+                                       return entity->getId() == relation.second;
+                                   })
+                                 | std::views::transform([](std::pair<int, int> relation) {
+                                       return relation.first;
+                                   });
         }
+
+        return getListOfType<Related_T>()
+               | std::views::filter([relatedEntityIdSet](std::shared_ptr<Related_T> related) {
+                     return std::ranges::find_if(relatedEntityIdSet, [related](int relatedId) {
+                         return related->getId() == relatedId;
+                     }) != relatedEntityIdSet.end();
+               });
     }
 
     template<typename Entity_T>

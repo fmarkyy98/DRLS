@@ -17,8 +17,8 @@ std::shared_ptr<db::Fruit> Fruit::setName(const QString& name) {
     return shared_from_this();
 }
 
-QList<std::shared_ptr<db::User>> Fruit::getUsers() const {
-    return {};
+const QList<std::shared_ptr<db::User>> Fruit::getUsers() const {
+    return entityCache_->getRelatedEntitiesOf<db::Fruit, db::User>(shared_from_this());
 }
 
 std::shared_ptr<Fruit> Fruit::clearUsers() {

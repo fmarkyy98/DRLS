@@ -27,7 +27,7 @@ public:
     std::shared_ptr<Fruit> setName(const QString& name);
 
     // Relations
-    QList<std::shared_ptr<db::User>> getUsers() const;
+    const QList<std::shared_ptr<User> > getUsers() const;
 
     std::shared_ptr<Fruit> clearUsers();
     std::shared_ptr<Fruit> addUser(std::shared_ptr<db::User> userToAdd);
