@@ -4,8 +4,6 @@
 
 #include "EntityType.h"
 
-#include "common/src/EntityCache.h"
-
 #define DELETE_COPY_MOVE_SEMANTICS(ENTITY_TYPE)      \
 ENTITY_TYPE(const ENTITY_TYPE&) = delete;            \
 ENTITY_TYPE(ENTITY_TYPE&&) = delete;                 \
@@ -13,9 +11,13 @@ ENTITY_TYPE(ENTITY_TYPE&&) = delete;                 \
 ENTITY_TYPE& operator=(const ENTITY_TYPE&) = delete; \
 ENTITY_TYPE& operator=(ENTITY_TYPE&&) = delete;
 
-#define DEFINE_getType()             \
-EntityType Entity::getType() const { \
-    return entityType_;              \
+#define DEFINE_getType(ENTITY_TYPE)       \
+EntityType ENTITY_TYPE::getType() const { \
+    return entityType_;                   \
+}
+
+namespace common {
+class EntityCache;
 }
 
 namespace db {

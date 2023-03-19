@@ -1,5 +1,7 @@
 #include "Entity.h"
 
+#include "common/src/EntityCache.h"
+
 using namespace db;
 
 Entity::Entity(int id)
@@ -7,7 +9,7 @@ Entity::Entity(int id)
     , id_(id)
 {}
 
-DEFINE_getType()
+DEFINE_getType(Entity)
 
 int Entity::getId() const {
     return id_;

@@ -8,6 +8,9 @@
 
 #include <QList>
 
+#include "persistence/Fruit.h"
+#include "persistence/User.h"
+
 namespace db {
     class Entity;
 
@@ -50,32 +53,39 @@ public:
         if constexpr (std::is_same_v<Entity_T, db::Fruit> &&
                       std::is_same_v<Related_T, db::User>)
         {
-            relatedEntityIdSet = fruitUserRelations_
-                                 | std::views::filter([entity](std::pair<int, int> relation) {
-                                       return entity->getId() == relation.first;
-                                   })
-                                 | std::views::transform([](std::pair<int, int> relation) {
-                                       return relation.second;
-                                   });
+            for (auto relation : fruitUserRelations_ | std::views::filter([entity](std::pair<int, int> relation) {
+                                     return entity->getId() == relation.first;
+                                 }))
+            {
+                relatedEntityIdSet.insert(relation.second);
+            }
         }
         if constexpr (std::is_same_v<Entity_T, db::User> &&
                       std::is_same_v<Related_T, db::Fruit>)
         {
-            relatedEntityIdSet = fruitUserRelations_
-                                 | std::views::filter([entity](std::pair<int, int> relation) {
-                                       return entity->getId() == relation.second;
-                                   })
-                                 | std::views::transform([](std::pair<int, int> relation) {
-                                       return relation.first;
-                                   });
+            for (const auto& relation : fruitUserRelations_
+                                        | std::views::filter([entity](std::pair<int, int> relation) {
+                                            return entity->getId() == relation.second;
+                                        }))
+            {
+                relatedEntityIdSet.insert(relation.first);
+            }
         }
 
-        return getListOfType<Related_T>()
-               | std::views::filter([relatedEntityIdSet](std::shared_ptr<Related_T> related) {
-                     return std::ranges::find_if(relatedEntityIdSet, [related](int relatedId) {
-                         return related->getId() == relatedId;
-                     }) != relatedEntityIdSet.end();
-               });
+        QList<std::shared_ptr<Related_T>> relatedEntities;
+        for (auto related : getListOfType<Related_T>()
+                            | std::views::filter([relatedEntityIdSet,
+                                                  &relatedEntities](std::shared_ptr<Related_T> related) {
+                                return std::find_if(relatedEntityIdSet.begin(), relatedEntityIdSet.end(),
+                                                    [related](int relatedId) {
+                                                        return related->getId() == relatedId;
+                                                    }) != relatedEntityIdSet.end();
+                            }))
+        {
+            relatedEntities.append(related);
+        }
+
+        return relatedEntities;
     }
 
     template<typename Entity_T>
@@ -90,7 +100,7 @@ public:
         if constexpr (std::is_same_v<Entity_T, db::Fruit> &&
                       std::is_same_v<Related_T, db::User>)
         {
-            fruitUserRelations_.insert({a->getId(), b->getId()});
+            fruitUserRelations_.insert(std::pair{a->getId(), b->getId()});
         }
         if constexpr (std::is_same_v<Entity_T, db::User> &&
                       std::is_same_v<Related_T, db::Fruit>)
@@ -104,7 +114,7 @@ public:
         if constexpr (std::is_same_v<Entity_T, db::Fruit> &&
                       std::is_same_v<Related_T, db::User>)
         {
-            fruitUserRelations_.erase({a->getId(), b->getId()});
+            fruitUserRelations_.erase(std::pair{a->getId(), b->getId()});
         }
         if constexpr (std::is_same_v<Entity_T, db::User> &&
                       std::is_same_v<Related_T, db::Fruit>)
@@ -118,22 +128,26 @@ public:
         if constexpr (std::is_same_v<Entity_T, db::Fruit> &&
                       std::is_same_v<Related_T, db::User>)
         {
-            fruitUserRelations_.erase(std::remove_if(fruitUserRelations_.begin(),
-                                                     fruitUserRelations_.end(),
-                                                     [entity](const std::pair<int, int>& pair) {
-                auto fruitId = pair.first;
-                return entity->getId() == fruitId;
-            }));
+            for (auto it = fruitUserRelations_.begin(); it != fruitUserRelations_.end();) {
+                if (entity->getId() == it->first) {
+                    it = fruitUserRelations_.erase(it);
+                    continue;
+                }
+
+                ++it;
+            }
         }
         if constexpr (std::is_same_v<Entity_T, db::User> &&
                       std::is_same_v<Related_T, db::Fruit>)
         {
-            fruitUserRelations_.erase(std::remove_if(fruitUserRelations_.begin(),
-                                                     fruitUserRelations_.end(),
-                                                     [entity](const std::pair<int, int>& pair) {
-                auto userId = pair.second;
-                return entity->getId() == userId;
-            }));
+            for (auto it = fruitUserRelations_.begin(); it != fruitUserRelations_.end();) {
+                if (entity->getId() == it->second) {
+                    it = fruitUserRelations_.erase(it);
+                    continue;
+                }
+
+                ++it;
+            }
         }
     }
 private:

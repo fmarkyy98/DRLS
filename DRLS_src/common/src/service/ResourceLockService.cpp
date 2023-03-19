@@ -2,8 +2,8 @@
 
 #include "utils/Finally.h"
 
+
 #include "persistence/Administrator.h"
-#include "persistence/Fruit.h"
 #include "persistence/User.h"
 
 using namespace common;
@@ -85,9 +85,9 @@ AsyncTaskPtr ResourceLockService::listenLocksChanged(QString token,
                 {
                     std::lock_guard<std::recursive_mutex> guard(lockMutex_);
 
-                    this->locksChangedCallbacks_.insertMulti(token,
-                                                            {{callback, filter},
-                                                             ignoreOwnedLocks});
+                    this->locksChangedCallbacks_.insert(token,
+                                                        {{callback, filter},
+                                                         ignoreOwnedLocks});
                 }
 
             });
@@ -253,7 +253,9 @@ AsyncFuncPtr<bool> ResourceLockService::renewLocksIfPossible(
         QMap<common::LockableResource, common::ResourceLockType> resources,
         common::CallerContext context)
 {
-    return asyncTaskService_->createFunction<bool>([=](AsyncFuncPtr<bool> f) {
+    return asyncTaskService_->createFunction<bool>([this,
+                                                    resources,
+                                                    context](AsyncFuncPtr<bool> f) {
         QList<QPair<std::optional<ResourceLock>, std::optional<ResourceLock>>> changedLocks;
 
         auto fin = util::finally([this, &changedLocks] {
@@ -289,7 +291,9 @@ AsyncTaskPtr ResourceLockService::releaseLocks(
         QMap<common::LockableResource, common::ResourceLockType> resources,
         common::CallerContext context)
 {
-    return asyncTaskService_->createTask([=](AsyncTaskPtr f) {
+    return asyncTaskService_->createTask([this,
+                                          resources,
+                                          context](AsyncTaskPtr f) {
         //        qDebug() << "[LOCKS] Locks before releasing...";
         //        this->printLocks(context);
         QList<QPair<std::optional<ResourceLock>, std::optional<ResourceLock>>> changedLocks;
@@ -327,7 +331,9 @@ AsyncFuncPtr<bool> ResourceLockService::acquireSystemLocks(
         QMap<common::LockableResource, common::ResourceLockType> resources,
         QString tag)
 {
-    return asyncTaskService_->createFunction<bool>([=](AsyncFuncPtr<bool> f) {
+    return asyncTaskService_->createFunction<bool>([this,
+                                                    resources,
+                                                    tag](AsyncFuncPtr<bool> f) {
         QList<QPair<std::optional<ResourceLock>, std::optional<ResourceLock>>> changedLocks;
 
         auto fin = util::finally([this, &changedLocks] {
@@ -376,8 +382,9 @@ AsyncTaskPtr ResourceLockService::releaseSystemLocks(
         QMap<common::LockableResource, common::ResourceLockType> resources,
         QString tag)
 {
-    return asyncTaskService_->createTask([=](AsyncTaskPtr f) {
-
+    return asyncTaskService_->createTask([this,
+                                          resources,
+                                          tag](AsyncTaskPtr f) {
         {
             std::lock_guard<std::recursive_mutex> guard(lockMutex_);
 
@@ -400,8 +407,7 @@ AsyncTaskPtr ResourceLockService::releaseSystemLocks(
 
 AsyncFuncPtr<QMap<int, QString>> ResourceLockService::getLocks(db::EntityType entityType) {
     return asyncTaskService_->createFunction<QMap<int, QString>>(
-            [=](AsyncFuncPtr<QMap<int, QString>> f) {
-
+            [this, entityType](AsyncFuncPtr<QMap<int, QString>> f) {
                 std::lock_guard<std::recursive_mutex> guard(lockMutex_);
 
                 QMap<int, QString> res;
@@ -433,8 +439,10 @@ AsyncFuncPtr<QSet<QPair<QString, QString>>> ResourceLockService::getConcurrentLo
         common::CallerContext context)
 {
     return asyncTaskService_->createFunction<
-            QSet<QPair<QString, QString>>>([=](AsyncFuncPtr<QSet<QPair<QString, QString>>> f) {
-
+            QSet<QPair<QString, QString>>>([this,
+                                            resources,
+                                            context]
+                                       (AsyncFuncPtr<QSet<QPair<QString, QString>>> f) {
         std::lock_guard<std::recursive_mutex> guard(lockMutex_);
 
         QDateTime now = QDateTime::currentDateTime();
@@ -593,4 +601,16 @@ void ResourceLockService::printLocks(const common::CallerContext& context, Async
             continue;
         qDebug() << "[LOCKS]" << lock.resource << "valid until:" << lock.timeout;
     }
+}
+
+std::shared_ptr<db::Administrator> ResourceLockService::getAdmynByUsername(
+    const QString& username) const
+{
+    auto admins = entityService_->getAll<db::Administrator>();
+    auto it = std::find_if(admins.begin(), admins.end(),
+                           [username](std::shared_ptr<db::Administrator> admin) {
+                               return admin->getUsername() == username;
+                           });
+
+    return it != admins.end() ? *it : nullptr;
 }

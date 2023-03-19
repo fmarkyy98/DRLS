@@ -1,11 +1,15 @@
+#include <QList>
+
 #include "Fruit.h"
+
+#include "common/src/EntityCache.h"
 
 using namespace db;
 
 Fruit::Fruit(int id) : Entity(id)
 {}
 
-DEFINE_getType()
+DEFINE_getType(Fruit)
 
 QString Fruit::getName() const {
     return name_;

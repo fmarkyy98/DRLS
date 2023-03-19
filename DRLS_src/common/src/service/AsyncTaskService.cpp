@@ -105,7 +105,7 @@ void AsyncTaskService::doAsynchronously(std::function<void()> function, bool onE
         };
     }
 
-    QtConcurrent::run(pool, action);
+    Q_UNUSED(QtConcurrent::run(pool, action));
 }
 
 void AsyncTaskService::emitExceptionSignals(std::shared_ptr<AsyncTask> task) {

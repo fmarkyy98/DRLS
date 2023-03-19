@@ -117,7 +117,7 @@ void AsyncTask::setState(const AsyncTask::State& value) {
         state = v;
     }
 
-    auto f = util::finally([=]() {
+    auto f = util::finally([this]() {
         qDebug() << "Task's (" << reinterpret_cast<intptr_t>(this) << ") new state is"
                  << stateToString(state);
     });

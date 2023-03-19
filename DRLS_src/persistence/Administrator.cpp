@@ -5,7 +5,7 @@ using namespace db;
 Administrator::Administrator(int id) : Entity(id)
 {}
 
-DEFINE_getType()
+DEFINE_getType(Administrator)
 
 QString Administrator::getUsername() const {
     return username_;

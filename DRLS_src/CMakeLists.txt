@@ -47,6 +47,7 @@ set(PROJECT_SOURCES
     common/src/service/DelayedResourceLockService.h
     common/src/service/DelayedResourceLockService.cpp
     common/src/service/EntityService.h
+    common/src/service/EntityService.cpp
     common/src/service/ResourceLockService.h
     common/src/service/ResourceLockService.cpp
 
@@ -55,6 +56,8 @@ set(PROJECT_SOURCES
     common/src/CallerContext.h
     common/src/Delegate.h
     common/src/Delegate.cpp
+    common/src/EntityCache.h
+    common/src/EntityCache.cpp
     common/src/LockableResource.h
     common/src/TaskManager.h
     common/src/TaskManager.cpp
@@ -66,8 +69,11 @@ set(PROJECT_SOURCES
     persistence/Entity.h
     persistence/Entity.cpp
     persistence/Administrator.h
+    persistence/Administrator.cpp
     persistence/Fruit.h
+    persistence/Fruit.cpp
     persistence/User.h
+    persistence/User.cpp
 
     utils/Finally.h
     utils/ThreadHelper.h
