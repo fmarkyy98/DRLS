@@ -13,7 +13,7 @@ std::recursive_mutex AsyncTask::aliveTasksCountMutex;
 int AsyncTask::aliveTasksCount = 0;
 
 std::mutex AsyncTask::priorityMapMutex;
-QMap<QThread*, AsyncTask::Priority> AsyncTask::priorityMap;
+std::map<QThread*, AsyncTask::Priority> AsyncTask::priorityMap;
 
 QString AsyncTask::priorityToString(const AsyncTask::Priority& priority) {
     switch (priority) {
@@ -440,7 +440,7 @@ bool AsyncTask::runCore(Priority priority) {
 
     {
         std::lock_guard<std::mutex> lock(priorityMapMutex);
-        priorityMap.remove(QThread::currentThread());
+        priorityMap.erase(QThread::currentThread());
     }
 
     return result;
@@ -885,15 +885,15 @@ std::shared_ptr<AsyncTask> AsyncTask::addMaintainedObject(std::shared_ptr<QObjec
 
 std::shared_ptr<AsyncTask> AsyncTask::removeMaintainedObject(std::shared_ptr<QObject> object) {
     std::lock_guard<std::mutex> lock(maintainedMutex);
-    this->maintainedObjects.remove(object);
+    this->maintainedObjects.erase(object);
     return shared_from_this();
 }
 
 std::shared_ptr<AsyncTask> AsyncTask::clearMaintainedObjects(bool clearPermanentObjects) {
     std::lock_guard<std::mutex> lock(maintainedMutex);
-    for (auto o : this->maintainedObjects.keys())
-        if (clearPermanentObjects || !this->maintainedObjects[o])
-            this->maintainedObjects.remove(o);
+    for (auto [o,l] : maintainedObjects)
+        if (clearPermanentObjects || !l)
+            maintainedObjects.erase(o);
 
     return shared_from_this();
 }

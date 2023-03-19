@@ -42,28 +42,28 @@ public:
                         std::shared_ptr< AsyncTaskService> asyncTaskService);
 
     AsyncFuncPtr<bool> acquireLocks(
-            QMap< LockableResource,  ResourceLockType> resources,
+            std::map< LockableResource,  ResourceLockType> resources,
              CallerContext context) override;
 
     AsyncFuncPtr<bool> renewLocksIfPossible(
-            QMap< LockableResource,  ResourceLockType> resources,
+            std::map< LockableResource,  ResourceLockType> resources,
              CallerContext context) override;
 
     AsyncTaskPtr releaseLocks(
-            QMap< LockableResource,  ResourceLockType> resources,
+            std::map< LockableResource,  ResourceLockType> resources,
              CallerContext context) override;
 
 
     AsyncFuncPtr<bool> acquireSystemLocks(
-            QMap< LockableResource,  ResourceLockType> resources,
+            std::map< LockableResource,  ResourceLockType> resources,
             QString tag) override;
 
     AsyncTaskPtr releaseSystemLocks(
-            QMap< LockableResource,  ResourceLockType> resources,
+            std::map< LockableResource,  ResourceLockType> resources,
             QString tag) override;
 
     AsyncFuncPtr<QSet<QPair<QString, QString>>> getConcurrentLockOwnerNames(
-            QMap< LockableResource,  ResourceLockType> resources,
+            std::map< LockableResource,  ResourceLockType> resources,
              CallerContext context) override;
 
     AsyncTaskPtr listenLocksChanged(QString token,
@@ -72,7 +72,7 @@ public:
                                     bool ignoreOwnedLocks        = true) override;
     AsyncTaskPtr stopListenLocksChanged(util::Callback<void()> callback) override;
 
-    AsyncFuncPtr<QMap<int, QString>> getLocks(db::EntityType entityType) override;
+    AsyncFuncPtr<std::map<int, QString>> getLocks(db::EntityType entityType) override;
 
 signals:
     // this signal is considered internal, and supports only direct connections
@@ -82,14 +82,14 @@ signals:
 private:
     static bool compatible( ResourceLockType existing,  ResourceLockType lock);
     static QString getResourceName( LockableResource resource);
-    QMap<ResourceLockService::ResourceLock, bool> getConcurrentLocks(
+    std::map<ResourceLockService::ResourceLock, bool> getConcurrentLocks(
              LockableResource resource,
              ResourceLockType lock) const;
     bool checkIfLockIsValid(ResourceLockService::ResourceLock lock,
                              LockableResource res) const;
 
-    std::optional<QMap< LockableResource,  ResourceLockType>> getResourcesToLock(
-            const QMap< LockableResource,  ResourceLockType>& resources,
+    std::optional<std::map< LockableResource,  ResourceLockType>> getResourcesToLock(
+            const std::map< LockableResource,  ResourceLockType>& resources,
             QList<QPair<std::optional<ResourceLock>, std::optional<ResourceLock>>>&
                     changedLocks,
             const QDateTime& now,
@@ -114,7 +114,7 @@ private:
             locksChangedCallbacks_;
     std::recursive_mutex changedMutex_;
 
-    QMap<int, QList<ResourceLock>> locksByAdmins_;
+    std::map<int, QList<ResourceLock>> locksByAdmins_;
 };
 
 }  // namespace common

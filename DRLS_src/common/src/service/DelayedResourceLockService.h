@@ -26,13 +26,13 @@ public:
             std::shared_ptr<common::AsyncTaskService> asyncTaskService);
 
     void addAsyncLock(CallerContext context,
-                      QMap<LockableResource, ResourceLockType> resources,
+                      std::map<LockableResource, ResourceLockType> resources,
                       AsyncTaskPtr task,
                       int timeoutMs,
                       AsyncTaskPtr timeoutTask = nullptr) override;
 
     void addAsyncSystemLock(QString tag,
-                            QMap<LockableResource, ResourceLockType> resources,
+                            std::map<LockableResource, ResourceLockType> resources,
                             AsyncTaskPtr task,
                             int timeoutMs,
                             AsyncTaskPtr timeoutTask = nullptr) override;
@@ -43,12 +43,12 @@ private slots:
 private:
     struct AsyncLock {
         std::variant<common::CallerContext, QString> contextOrTag_;
-        QMap<common::LockableResource, common::ResourceLockType> resources_;
+        std::map<common::LockableResource, common::ResourceLockType> resources_;
         AsyncTaskPtr task_;
         QObject* guard_;
 
         AsyncLock(common::CallerContext context,
-                  QMap<common::LockableResource, common::ResourceLockType> resources,
+                  std::map<common::LockableResource, common::ResourceLockType> resources,
                   AsyncTaskPtr task)
             : contextOrTag_(context)
             , resources_(resources)
@@ -57,7 +57,7 @@ private:
         {}
 
         AsyncLock(QString tag,
-                  QMap<common::LockableResource, common::ResourceLockType> resources,
+                  std::map<common::LockableResource, common::ResourceLockType> resources,
                   AsyncTaskPtr task)
             : contextOrTag_(tag), resources_(resources), task_(task), guard_(new QObject())
         {}
@@ -67,7 +67,7 @@ private:
 
 private:
     void manageAddedAsyncLock(std::variant<common::CallerContext, QString> contextOrTag,
-                              QMap<LockableResource, ResourceLockType> resources,
+                              std::map<LockableResource, ResourceLockType> resources,
                               AsyncTaskPtr task,
                               int timeoutMs,
                               AsyncTaskPtr timeoutTask);

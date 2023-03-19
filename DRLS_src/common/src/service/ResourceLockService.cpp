@@ -79,17 +79,15 @@ AsyncTaskPtr ResourceLockService::listenLocksChanged(QString token,
                     locksChangedCallbacks_.remove(token,
                                                  {{callback, filter},
                                                   ignoreOwnedLocks});
-
                 }});
 
                 {
                     std::lock_guard<std::recursive_mutex> guard(lockMutex_);
 
-                    this->locksChangedCallbacks_.insert(token,
+                    locksChangedCallbacks_.insert(token,
                                                         {{callback, filter},
                                                          ignoreOwnedLocks});
                 }
-
             });
 }
 
@@ -124,13 +122,13 @@ void ResourceLockService::connectToChangedSignal() {
 
                 {
                     std::lock_guard<std::recursive_mutex> guard(lockMutex_);
-                    if (this->locksChangedCallbacks_.isEmpty())
+                    if (this->locksChangedCallbacks_.empty())
                         return;
 
-                    callbacksWithToken = this->locksChangedCallbacks_;
+                    callbacksWithToken = locksChangedCallbacks_;
                 }
 
-                if (callbacksWithToken.isEmpty())
+                if (callbacksWithToken.empty())
                     return;
 
                 for (auto data : changedLocks) {
@@ -186,7 +184,7 @@ void ResourceLockService::connectToChangedSignal() {
 }
 
 AsyncFuncPtr<bool> ResourceLockService::acquireLocks(
-        QMap<common::LockableResource, common::ResourceLockType> resources,
+        std::map<common::LockableResource, common::ResourceLockType> resources,
         common::CallerContext context)
 {
     return asyncTaskService_->createFunction<bool>([this, resources, context]
@@ -228,10 +226,10 @@ AsyncFuncPtr<bool> ResourceLockService::acquireLocks(
                 throw std::invalid_argument("Administrator does not exist.");
 
             // acquire new locks
-            for (auto& res : resourcesToLock->keys()) {
+            for (const auto& [res, type] : resourcesToLock.value()) {
                 auto lock     = ResourceLock();
                 lock.acquired = now;
-                lock.type     = resources[res] == common::ResourceLockType::Read
+                lock.type     = resources.at(res) == common::ResourceLockType::Read
                                     ? common::ResourceLockType::Read
                                     : common::ResourceLockType::Write;
                 lock.resource   = getResourceName(res);
@@ -250,7 +248,7 @@ AsyncFuncPtr<bool> ResourceLockService::acquireLocks(
 }
 
 AsyncFuncPtr<bool> ResourceLockService::renewLocksIfPossible(
-        QMap<common::LockableResource, common::ResourceLockType> resources,
+        std::map<common::LockableResource, common::ResourceLockType> resources,
         common::CallerContext context)
 {
     return asyncTaskService_->createFunction<bool>([this,
@@ -288,7 +286,7 @@ AsyncFuncPtr<bool> ResourceLockService::renewLocksIfPossible(
 }
 
 AsyncTaskPtr ResourceLockService::releaseLocks(
-        QMap<common::LockableResource, common::ResourceLockType> resources,
+        std::map<common::LockableResource, common::ResourceLockType> resources,
         common::CallerContext context)
 {
     return asyncTaskService_->createTask([this,
@@ -304,11 +302,9 @@ AsyncTaskPtr ResourceLockService::releaseLocks(
             if (admin == nullptr)
                 throw std::invalid_argument("Administrator does not exist.");
 
-            for (auto& res : resources.keys()) {
+            for (const auto& [res, type] : resources) {
                 auto resourceName = getResourceName(res);
-                auto type         = resources[res] == common::ResourceLockType::Read
-                                    ? common::ResourceLockType::Read
-                                    : common::ResourceLockType::Write;
+
                 for (auto lock : locksByAdmins_[admin->getId()]) {
                     if (lock.resource == resourceName && lock.type == type &&
                         lock.adminToken == context.token) {
@@ -328,7 +324,7 @@ AsyncTaskPtr ResourceLockService::releaseLocks(
 }
 
 AsyncFuncPtr<bool> ResourceLockService::acquireSystemLocks(
-        QMap<common::LockableResource, common::ResourceLockType> resources,
+        std::map<common::LockableResource, common::ResourceLockType> resources,
         QString tag)
 {
     return asyncTaskService_->createFunction<bool>([this,
@@ -356,10 +352,10 @@ AsyncFuncPtr<bool> ResourceLockService::acquireSystemLocks(
             }
 
             // acquire new locks
-            for (auto& res : resourcesToLock->keys()) {
+            for (const auto& [res, type] : resourcesToLock.value()) {
                 auto lock     = ResourceLock();
                 lock.acquired = now;
-                lock.type     = resources[res] == common::ResourceLockType::Read
+                lock.type     = resources.at(res) == common::ResourceLockType::Read
                                     ? common::ResourceLockType::Read
                                     : common::ResourceLockType::Write;
                 lock.resource = getResourceName(res);
@@ -379,7 +375,7 @@ AsyncFuncPtr<bool> ResourceLockService::acquireSystemLocks(
 }
 
 AsyncTaskPtr ResourceLockService::releaseSystemLocks(
-        QMap<common::LockableResource, common::ResourceLockType> resources,
+        std::map<common::LockableResource, common::ResourceLockType> resources,
         QString tag)
 {
     return asyncTaskService_->createTask([this,
@@ -388,11 +384,8 @@ AsyncTaskPtr ResourceLockService::releaseSystemLocks(
         {
             std::lock_guard<std::recursive_mutex> guard(lockMutex_);
 
-            for (auto& res : resources.keys()) {
+            for (const auto& [res, type] : resources) {
                 auto resourceName = getResourceName(res);
-                auto type         = resources[res] == common::ResourceLockType::Read
-                                    ? common::ResourceLockType::Read
-                                    : common::ResourceLockType::Write;
 
                 for (auto lock : locksByAdmins_[-1]) {
                     if (lock.resource == resourceName && lock.type == type && lock.tag == tag)
@@ -405,15 +398,15 @@ AsyncTaskPtr ResourceLockService::releaseSystemLocks(
     });
 }
 
-AsyncFuncPtr<QMap<int, QString>> ResourceLockService::getLocks(db::EntityType entityType) {
-    return asyncTaskService_->createFunction<QMap<int, QString>>(
-            [this, entityType](AsyncFuncPtr<QMap<int, QString>> f) {
+AsyncFuncPtr<std::map<int, QString>> ResourceLockService::getLocks(db::EntityType entityType) {
+    return asyncTaskService_->createFunction<std::map<int, QString>>(
+            [this, entityType](AsyncFuncPtr<std::map<int, QString>> f) {
                 std::lock_guard<std::recursive_mutex> guard(lockMutex_);
 
-                QMap<int, QString> res;
+                std::map<int, QString> res;
 
                 QList<ResourceLock> locks;
-                for (auto lockList : locksByAdmins_) {
+                for (const auto& [_, lockList] : locksByAdmins_) {
                     for (auto lock : lockList) {
                         if (lock.type == common::ResourceLockType::Write &&
                             lock.resource.contains(db::entityTypeToString(entityType) + "#"))
@@ -426,7 +419,7 @@ AsyncFuncPtr<QMap<int, QString>> ResourceLockService::getLocks(db::EntityType en
                     int id  = lock.resource.mid(pos).toInt();
                     if (id > 0 && lock.adminId > 0) {
                         auto admin = entityService_->getById<db::Administrator>(lock.adminId);
-                        res.insert(id, admin->getUsername());
+                        res[id] = admin->getUsername();
                     }
                 }
                 f->setResult(res);
@@ -435,7 +428,7 @@ AsyncFuncPtr<QMap<int, QString>> ResourceLockService::getLocks(db::EntityType en
 }
 
 AsyncFuncPtr<QSet<QPair<QString, QString>>> ResourceLockService::getConcurrentLockOwnerNames(
-        QMap<common::LockableResource, common::ResourceLockType> resources,
+        std::map<common::LockableResource, common::ResourceLockType> resources,
         common::CallerContext context)
 {
     return asyncTaskService_->createFunction<
@@ -448,9 +441,9 @@ AsyncFuncPtr<QSet<QPair<QString, QString>>> ResourceLockService::getConcurrentLo
         QDateTime now = QDateTime::currentDateTime();
         QSet<QPair<QString, QString>> admins;
 
-        for (auto& res : resources.keys()) {
-            auto existing = getConcurrentLocks(res, resources[res]);
-            for (ResourceLock lock : existing.keys()) {
+        for (const auto& [res, type] : resources) {
+            auto existing = getConcurrentLocks(res, type);
+            for (const auto& [lock, _] : existing) {
                 // if lock is expired, remove it
                 if (lock.timeout < now) {
                     locksByAdmins_[lock.adminId].removeOne(lock);
@@ -492,18 +485,18 @@ QString ResourceLockService::getResourceName(common::LockableResource resource) 
     throw std::runtime_error("Unknown resource type");
 }
 
-QMap<ResourceLockService::ResourceLock, bool> ResourceLockService::getConcurrentLocks(
+std::map<ResourceLockService::ResourceLock, bool> ResourceLockService::getConcurrentLocks(
         common::LockableResource resource,
         common::ResourceLockType lock) const
 {
-    QMap<ResourceLockService::ResourceLock, bool> result;
+    std::map<ResourceLockService::ResourceLock, bool> result;
 
     auto resourceName = getResourceName(resource);
 
     auto lockType = lock == common::ResourceLockType::Read ? common::ResourceLockType::Read
                                                            : common::ResourceLockType::Write;
 
-    for (auto lockList : locksByAdmins_) {
+    for (const auto& [adminId, lockList] : locksByAdmins_) {
         for (auto currentLock : lockList) {
             if (checkIfLockIsValid(currentLock, resource)) {
                 result[currentLock] = compatible(currentLock.type, lockType);
@@ -527,24 +520,20 @@ bool ResourceLockService::checkIfLockIsValid(ResourceLockService::ResourceLock l
     return false;
 }
 
-std::optional<QMap<common::LockableResource, common::ResourceLockType>>
+std::optional<std::map<common::LockableResource, common::ResourceLockType>>
 ResourceLockService::getResourcesToLock(
-        const QMap<common::LockableResource, common::ResourceLockType>& resources,
+        const std::map<common::LockableResource, common::ResourceLockType>& resources,
         QList<QPair<std::optional<ResourceLock>, std::optional<ResourceLock>>>& changedLocks,
         const QDateTime& now,
         std::function<bool(ResourceLock lock)> isLockOurs)
 {
     QList<ResourceLock*> locksToRenew;
-    QMap<common::LockableResource, common::ResourceLockType> resourcesToLock;
+    std::map<common::LockableResource, common::ResourceLockType> resourcesToLock;
 
-    for (auto& res : resources.keys()) {
+    for (const auto& [res, lockType] : resources) {
         bool hasLock = false;
 
-        auto lockType = resources[res] == common::ResourceLockType::Read
-                                ? common::ResourceLockType::Read
-                                : common::ResourceLockType::Write;
-
-        for (auto& lockList : locksByAdmins_) {
+        for (auto& [adminId, lockList] : locksByAdmins_) {
             for (int i = 0; i < lockList.length(); i++) {
                 if (checkIfLockIsValid(lockList.at(i), res)) {
                     if (isLockOurs(lockList.at(i))) {
@@ -576,7 +565,7 @@ ResourceLockService::getResourcesToLock(
 
         // if does not have lock yet, prepare for creation
         if (!hasLock)
-            resourcesToLock[res] = resources[res];
+            resourcesToLock[res] = resources.at(res);
     }
 
     // renew if locking didn't failed

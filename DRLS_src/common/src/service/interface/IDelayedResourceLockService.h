@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QMap>
+#include <map>
 
 #include "common/src/CallerContext.h"
 #include "common/src/AsyncTask.h"
@@ -12,13 +12,13 @@ namespace common {
 class IDelayedResourceLockService {
 public:
   virtual void addAsyncLock(CallerContext context,
-                            QMap<common::LockableResource, common::ResourceLockType> resources,
+                            std::map<common::LockableResource, common::ResourceLockType> resources,
                             AsyncTaskPtr task,
                             int timeoutMs,
                             AsyncTaskPtr timeoutTask = nullptr) = 0;
   virtual void addAsyncSystemLock(
             QString tag,
-            QMap<LockableResource, ResourceLockType> resources,
+            std::map<LockableResource, ResourceLockType> resources,
             AsyncTaskPtr task,            int timeoutMs,
             AsyncTaskPtr timeoutTask = nullptr) = 0;
 };

@@ -102,7 +102,7 @@ private:
     static std::recursive_mutex aliveTasksCountMutex;
     static int aliveTasksCount;
     static std::mutex priorityMapMutex;
-    static QMap<QThread*, Priority> priorityMap;
+    static std::map<QThread*, Priority> priorityMap;
 
     std::shared_ptr<AsyncTaskService> taskService;
     std::function<bool(std::shared_ptr<AsyncTask>)> function;
@@ -121,7 +121,7 @@ private:
     int progress                 = 0;
     std::exception_ptr exception = nullptr;
     std::mutex maintainedMutex;
-    QMap<std::shared_ptr<QObject>, bool> maintainedObjects;
+    std::map<std::shared_ptr<QObject>, bool> maintainedObjects;
     QList<State> allowedHandlers = {};
 
 #ifdef DEBUG_SAVE_STACKTRACE

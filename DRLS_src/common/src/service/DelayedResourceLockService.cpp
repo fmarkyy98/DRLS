@@ -121,7 +121,7 @@ void DelayedResourceLockService::onLocksChanged() {
 
 void DelayedResourceLockService::addAsyncLock(
         CallerContext context,
-        QMap<LockableResource, ResourceLockType> resources,
+        std::map<LockableResource, ResourceLockType> resources,
         AsyncTaskPtr task,
         int timeoutMs,
         AsyncTaskPtr timeoutTask)
@@ -131,7 +131,7 @@ void DelayedResourceLockService::addAsyncLock(
 
 void DelayedResourceLockService::addAsyncSystemLock(
         QString tag,
-        QMap<LockableResource, ResourceLockType> resources,
+        std::map<LockableResource, ResourceLockType> resources,
         AsyncTaskPtr task,
         int timeoutMs,
         AsyncTaskPtr timeoutTask)
@@ -141,7 +141,7 @@ void DelayedResourceLockService::addAsyncSystemLock(
 
 void DelayedResourceLockService::manageAddedAsyncLock(
         std::variant<common::CallerContext, QString> contextOrTag,
-        QMap<LockableResource, ResourceLockType> resources,
+        std::map<LockableResource, ResourceLockType> resources,
         AsyncTaskPtr task,
         int timeoutMs,
         AsyncTaskPtr timeoutTask)

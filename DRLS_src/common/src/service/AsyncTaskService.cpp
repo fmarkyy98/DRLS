@@ -289,12 +289,12 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createParallel(
         auto selfFailed    = std::make_shared<bool>(false);
         auto alreadyFailed = std::make_shared<bool>(false);
         auto allFinished   = std::make_shared<std::condition_variable>();
-        auto tasksEnded    = std::make_shared<QMap<AsyncTaskPtr, bool>>();
+        auto tasksEnded    = std::make_shared<std::map<AsyncTaskPtr, bool>>();
         auto mutex         = std::make_shared<std::mutex>();
         auto exception     = std::make_shared<std::exception_ptr>(nullptr);
 
         DelegateConnection selfEndedConn, selfTerminatedConn;
-        QMap<AsyncTaskPtr, QList<DelegateConnection>> startedConns, endedConns, terminatedConns;
+        std::map<AsyncTaskPtr, QList<DelegateConnection>> startedConns, endedConns, terminatedConns;
 
         if (!this->initSubtasks(self, tasks, "Parallel"))
             return false;
@@ -322,7 +322,7 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createParallel(
                     }
                 }
 
-                tasksEnded->insert(t, true);
+                (*tasksEnded)[t] = true;
             }
 
             if (cancelTasks) {
@@ -333,7 +333,7 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createParallel(
                     task->cancel();
 
                     std::lock_guard<std::mutex> lock(*mutex);
-                    tasksEnded->insert(task, true);
+                    (*tasksEnded)[task] = true;
                 }
             }
 
@@ -342,7 +342,7 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createParallel(
 
         // get tasks ready
         for (auto task : tasks) {
-            tasksEnded->insert(task, false);
+            (*tasksEnded)[task] = false;
             DelegateConnection startedConn, endedConn, terminatedConn;
             std::weak_ptr<AsyncTask> selfWeak = self;
 
@@ -428,8 +428,7 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createParallel(
                 if (self->isTerminated())
                     return true;
 
-                auto map = tasksEnded->values();
-                for (bool state : map)
+                for (const auto& [_, state] : *tasksEnded)
                     if (!state)
                         return false;
 
@@ -441,16 +440,16 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createParallel(
                  << ") finished running all its children.";
 
         // disconnect remaining connections
-        for (auto task : startedConns.keys())
-            for (auto& conn : startedConns[task])
+        for (auto& [task, conns] : startedConns)
+            for (const auto& conn : conns)
                 task->removeStartedHandler(conn);
 
-        for (auto task : endedConns.keys())
-            for (auto& conn : endedConns[task])
+        for (auto& [task, conns] : endedConns)
+            for (const auto& conn : conns)
                 task->removeEndedHandler(conn);
 
-        for (auto task : terminatedConns.keys())
-            for (auto& conn : terminatedConns[task])
+        for (auto& [task, conns] : terminatedConns)
+            for (auto& conn : conns)
                 task->removeTerminatedHandler(conn);
 
         startedConns.clear();
@@ -490,11 +489,11 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createAttempt(
         auto selfFailed       = std::make_shared<bool>(false);
         auto alreadySucceeded = std::make_shared<bool>(false);
         auto allFinished      = std::make_shared<std::condition_variable>();
-        auto tasksEnded       = std::make_shared<QMap<AsyncTaskPtr, bool>>();
+        auto tasksEnded       = std::make_shared<std::map<AsyncTaskPtr, bool>>();
         auto mutex            = std::make_shared<std::mutex>();
 
         DelegateConnection selfEndedConn, selfTerminatedConn;
-        QMap<AsyncTaskPtr, QList<DelegateConnection>> startedConns, endedConns, terminatedConns;
+        std::map<AsyncTaskPtr, QList<DelegateConnection>> startedConns, endedConns, terminatedConns;
 
         if (!this->initSubtasks(self, tasks, "Attempt"))
             return false;
@@ -521,7 +520,7 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createAttempt(
                     }
                 }
 
-                tasksEnded->insert(t, true);
+                (*tasksEnded)[t] = true;
             }
 
             if (cancelTasks) {
@@ -532,7 +531,7 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createAttempt(
                     task->cancel();
 
                     std::lock_guard<std::mutex> lock(*mutex);
-                    tasksEnded->insert(task, true);
+                    (*tasksEnded)[task] = true;
                 }
             }
 
@@ -541,7 +540,7 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createAttempt(
 
         // get tasks ready
         for (auto& task : tasks) {
-            tasksEnded->insert(task, false);
+            (*tasksEnded)[task] = false;
             DelegateConnection startedConn, endedConn, terminatedConn;
             std::weak_ptr<AsyncTask> selfWeak = self;
 
@@ -620,8 +619,7 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createAttempt(
                 if (self->isTerminated())
                     return true;
 
-                auto map = tasksEnded->values();
-                for (bool state : map)
+                for (const auto& [_, state] : *tasksEnded)
                     if (!state)
                         return false;
 
@@ -633,16 +631,16 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createAttempt(
                  << ") finished running all its children.";
 
         // disconnect remaining connections
-        for (auto task : startedConns.keys())
-            for (auto& conn : startedConns[task])
+        for (auto& [task, conns] : startedConns)
+            for (const auto& conn : conns)
                 task->removeStartedHandler(conn);
 
-        for (auto task : endedConns.keys())
-            for (auto& conn : endedConns[task])
+        for (auto& [task, conns] : endedConns)
+            for (const auto& conn : conns)
                 task->removeEndedHandler(conn);
 
-        for (auto task : terminatedConns.keys())
-            for (auto& conn : terminatedConns[task])
+        for (auto& [task, conns] : terminatedConns)
+            for (const auto& conn : conns)
                 task->removeTerminatedHandler(conn);
 
         startedConns.clear();
