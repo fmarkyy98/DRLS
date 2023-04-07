@@ -28,11 +28,20 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 set(PROJECT_SOURCES
+    client/src/details/FruitDetailsWidget.h
+    client/src/details/FruitDetailsWidget.cpp
+    client/src/details/FruitDetailsWidget.ui
+    client/src/details/UserDetailsWidget.h
+    client/src/details/UserDetailsWidget.cpp
+    client/src/details/UserDetailsWidget.ui
 
+    client/src/main.cpp
     client/src/MainWindow.h
     client/src/MainWindow.cpp
     client/src/MainWindow.ui
-    client/src/main.cpp
+    client/src/MasterDetailWidget.h
+    client/src/MasterDetailWidget.cpp
+    client/src/MasterDetailWidget.ui
 
     common/src/service/EntityServiceSpecializations/AdministratorEntityService.cpp
     common/src/service/EntityServiceSpecializations/FruitEntityService.cpp
