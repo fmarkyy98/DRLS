@@ -21,8 +21,7 @@ namespace db {
 
 namespace common {
 
-class EntityCache : std::enable_shared_from_this<EntityCache>
-{    
+class EntityCache : std::enable_shared_from_this<EntityCache> {
 public:
     static std::shared_ptr<EntityCache> getInstance();
 

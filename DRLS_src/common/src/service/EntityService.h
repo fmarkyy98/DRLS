@@ -10,6 +10,9 @@ namespace common {
 class EntityCache;
 
 class EntityService {
+public:
+    static std::shared_ptr<EntityService> getInstance();
+
 private:
     EntityService(std::shared_ptr<common::EntityCache> entityCache);
 
@@ -55,6 +58,9 @@ private:
         });
         return result;
     }
+
+private:
+    static std::shared_ptr<EntityService> instance_;
 
 private:
     std::shared_ptr<common::EntityCache> entityCache_;
