@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MasterDetailWidget</class>
- <widget class="QWidget" name="MasterDetailWidget">
+ <class>view::FruitsTab</class>
+ <widget class="QWidget" name="view::FruitsTab">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>824</width>
-    <height>643</height>
+    <width>678</width>
+    <height>615</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,7 +55,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Entities</string>
+         <string>Fruits</string>
         </property>
        </widget>
       </item>
@@ -111,7 +111,36 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout"/>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="font">
+         <font>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Name *</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_2"/>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>

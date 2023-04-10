@@ -1,9 +1,10 @@
 #include "MainWindow.h"
-#include "./ui_MainWindow.h"
+#include "ui_MainWindow.h"
 
-#include "MasterDetailWidget.h"
-#include "details/UserDetailsWidget.h"
-#include "details/FruitDetailsWidget.h"
+#include "tabs/FruitsTab.h"
+#include "tabs/UsersTab.h"
+
+using namespace view;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -11,8 +12,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->usersTab->layout()->addWidget(new MasterDetailWidget("Users", new UserDetailsWidget()));
-    ui->fruitsTab->layout()->addWidget(new MasterDetailWidget("Fruits", new FruitDetailsWidget()));
+    ui->usersTab->layout()->addWidget(new UsersTab(common::EntityService::getInstance()));
+    ui->fruitsTab->layout()->addWidget(new FruitsTab(common::EntityService::getInstance()));
 }
 
 MainWindow::~MainWindow()
