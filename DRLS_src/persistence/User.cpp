@@ -32,7 +32,7 @@ QString User::getFullName() const {
     return namePrefix_.value_or("") + firstName_ + midleName_.value_or("") + lastName_;
 }
 
-std::shared_ptr<User> User::setNamePrefix(const QString& namePrefix) {
+std::shared_ptr<User> User::setNamePrefix(const std::optional<QString>& namePrefix) {
     namePrefix_ = namePrefix;
 
     return shared_from_this();
@@ -44,7 +44,7 @@ std::shared_ptr<User> User::setFirstName(const QString& firstName) {
     return shared_from_this();
 }
 
-std::shared_ptr<User> User::setMidleName(const QString& midleName) {
+std::shared_ptr<User> User::setMidleName(const std::optional<QString>& midleName) {
     midleName_ = midleName;
 
     return shared_from_this();

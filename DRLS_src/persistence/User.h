@@ -32,9 +32,9 @@ public:
     // non trivial getters
     QString getFullName() const;
 
-    std::shared_ptr<User> setNamePrefix(const QString& namePrefix);
+    std::shared_ptr<User> setNamePrefix(const std::optional<QString> &namePrefix);
     std::shared_ptr<User> setFirstName(const QString& firstName);
-    std::shared_ptr<User> setMidleName(const QString& midleName);
+    std::shared_ptr<User> setMidleName(const std::optional<QString> &midleName);
     std::shared_ptr<User> setLastName(const QString& lastName);
 
     // relations
