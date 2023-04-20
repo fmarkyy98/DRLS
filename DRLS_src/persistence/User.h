@@ -11,7 +11,10 @@ namespace common {
 namespace db {
 class Fruit;
 
-class User : public Entity, std::enable_shared_from_this<User> {
+class User
+    : public Entity
+    , public std::enable_shared_from_this<User>
+{
     friend class common::EntityService;
 
 private:

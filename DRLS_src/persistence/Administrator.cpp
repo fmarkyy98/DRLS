@@ -2,7 +2,9 @@
 
 using namespace db;
 
-Administrator::Administrator(int id) : Entity(id)
+Administrator::Administrator(int id)
+    : Entity(id)
+    , std::enable_shared_from_this<Administrator>()
 {}
 
 DEFINE_getType(Administrator)

@@ -45,7 +45,10 @@ class AsyncTaskService
     , public std::enable_shared_from_this<AsyncTaskService>
 {
     Q_OBJECT
+public:
+    static std::shared_ptr<AsyncTaskService> getInstance();
 
+private:
     friend class AsyncTask;
 
     class AsyncRunnable : public QRunnable {
@@ -179,6 +182,9 @@ public slots:
 
 signals:
     void numberOfTasksChanged(int registered, int running);
+
+private:
+    static std::shared_ptr<AsyncTaskService> instance_;
 };
 
 }  // namespace common

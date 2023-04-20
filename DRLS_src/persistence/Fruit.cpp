@@ -6,7 +6,8 @@
 
 using namespace db;
 
-Fruit::Fruit(int id) : Entity(id)
+Fruit::Fruit(int id)
+    : Entity(id)
 {}
 
 DEFINE_getType(Fruit)

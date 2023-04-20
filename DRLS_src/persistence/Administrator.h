@@ -8,7 +8,10 @@ namespace common {
 
 namespace db {
 
-class Administrator : public Entity, std::enable_shared_from_this<Administrator> {
+class Administrator
+    : public Entity
+    , public std::enable_shared_from_this<Administrator>
+{
     friend class common::EntityService;
 
 private:

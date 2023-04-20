@@ -6,7 +6,9 @@
 
 using namespace db;
 
-User::User(int id) : Entity(id)
+User::User(int id)
+    : Entity(id)
+    , std::enable_shared_from_this<User>()
 {}
 
 DEFINE_getType(User)

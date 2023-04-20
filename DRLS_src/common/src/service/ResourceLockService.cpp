@@ -42,6 +42,8 @@ bool ResourceLockService::ResourceLock::operator<(const ResourceLock& other) con
     return false;
 }
 
+std::shared_ptr<ResourceLockService> ResourceLockService::instance_;
+
 ResourceLockService::ResourceLockService(
         std::shared_ptr<EntityService> entityService,
         std::shared_ptr<common::AsyncTaskService> asyncTaskService)
@@ -49,6 +51,15 @@ ResourceLockService::ResourceLockService(
     , asyncTaskService_(asyncTaskService)
 {
     connectToChangedSignal();
+}
+
+std::shared_ptr<ResourceLockService> ResourceLockService::getInstance() {
+    if (instance_ == nullptr)
+        instance_ = std::shared_ptr<ResourceLockService>(
+            new ResourceLockService(common::EntityService::getInstance(),
+                                    common::AsyncTaskService::getInstance()));
+
+    return instance_;
 }
 
 AsyncTaskPtr ResourceLockService::listenLocksChanged(QString token,

@@ -22,13 +22,16 @@ class ResourceLockService
 {
     Q_OBJECT
 
+public:
+    static std::shared_ptr<ResourceLockService> getInstance();
+
 private:
     struct ResourceLock {
         QDateTime acquired;
         QDateTime timeout;
         QString tag;
         QString resource;
-         ResourceLockType type;
+        ResourceLockType type;
 
         bool operator==(const ResourceLock& other) const;
         bool operator<(const ResourceLock& other) const;
@@ -37,10 +40,11 @@ private:
         QString adminToken;
     };
 
-public:
+private:
     ResourceLockService(std::shared_ptr<EntityService> entityService,
                         std::shared_ptr< AsyncTaskService> asyncTaskService);
 
+public:
     AsyncFuncPtr<bool> acquireLocks(
             std::map< LockableResource,  ResourceLockType> resources,
              CallerContext context) override;
@@ -104,7 +108,9 @@ private:
 
 private:
     static const int SecondsToLive;
+    static std::shared_ptr<ResourceLockService> instance_;
 
+private:
     std::shared_ptr<EntityService> entityService_;
     std::shared_ptr<AsyncTaskService> asyncTaskService_;
 

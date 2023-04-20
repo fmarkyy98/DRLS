@@ -4,6 +4,8 @@
 #include "tabs/FruitsTab.h"
 #include "tabs/UsersTab.h"
 
+#include "common/src/service/ResourceLockService.h"
+
 using namespace view;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -12,7 +14,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->usersTab->layout()->addWidget(new UsersTab(common::EntityService::getInstance()));
+    ui->usersTab->layout()->addWidget(new UsersTab(common::EntityService::getInstance(),
+                                                   common::ResourceLockService::getInstance()));
     ui->fruitsTab->layout()->addWidget(new FruitsTab(common::EntityService::getInstance()));
 }
 

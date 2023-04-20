@@ -11,6 +11,8 @@ using namespace common;
 
 #define MIN_THREAD_COUNT 4
 
+std::shared_ptr<AsyncTaskService> AsyncTaskService::instance_;
+
 AsyncTaskService::AsyncTaskService()
     : pool(QThreadPool::globalInstance()), tasks(), runningTasks(), taskMutex()
 {
@@ -22,6 +24,13 @@ AsyncTaskService::AsyncTaskService()
     // we use at least 4 threads
     if (pool->maxThreadCount() < MIN_THREAD_COUNT)
         pool->setMaxThreadCount(MIN_THREAD_COUNT);
+}
+
+std::shared_ptr<AsyncTaskService> AsyncTaskService::getInstance() {
+    if (instance_ == nullptr)
+        instance_ = std::shared_ptr<AsyncTaskService>(new AsyncTaskService());
+
+    return instance_;
 }
 
 AsyncTaskService::~AsyncTaskService() {

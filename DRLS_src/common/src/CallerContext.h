@@ -9,8 +9,10 @@ struct CallerContext
     QString token;
     QString username;
 
-    CallerContext() = default;
-    CallerContext(const QString& token) : token(token) {}
+    CallerContext(const QString& token = "", const QString& username = "")
+        : token(token)
+        , username(username)
+    {}
 };
 
 }// namespace common
