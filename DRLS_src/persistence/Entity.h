@@ -16,6 +16,12 @@ EntityType ENTITY_TYPE::getType() const { \
     return entityType_;                   \
 }
 
+#define DEFINE_remove(ENTITY_TYPE)            \
+void ENTITY_TYPE::remove() {                  \
+    entityCache_->remove(shared_from_this()); \
+}
+
+
 namespace common {
 class EntityCache;
 }
@@ -34,6 +40,8 @@ public:
     virtual EntityType getType() const;
 
     int getId() const;
+
+    virtual void remove() = 0;
 
 protected:
     std::shared_ptr<common::EntityCache> entityCache_;

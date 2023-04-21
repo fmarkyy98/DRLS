@@ -29,7 +29,9 @@ public:
 
     std::shared_ptr<Fruit> setName(const QString& name);
 
-    // Relations
+    void remove() override;
+
+    // relations
     const QList<std::shared_ptr<User> > getUsers() const;
 
     std::shared_ptr<Fruit> clearUsers();

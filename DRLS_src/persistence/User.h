@@ -40,6 +40,8 @@ public:
     std::shared_ptr<User> setMidleName(const std::optional<QString> &midleName);
     std::shared_ptr<User> setLastName(const QString& lastName);
 
+    void remove() override;
+
     // relations
     const QList<std::shared_ptr<Fruit>> getFruits() const;
 

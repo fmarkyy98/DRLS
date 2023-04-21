@@ -29,6 +29,7 @@ private:
     EntityCache() = default;
 
     template<typename Entity_T>
+    requires std::is_base_of_v<db::Entity, Entity_T>
     QList<std::shared_ptr<Entity_T>>& getListOfType() {
         if constexpr (std::is_same_v<Entity_T, db::Administrator>)
             return admins_;
@@ -42,11 +43,14 @@ private:
 
 public:
     template<typename Entity_T>
+    requires std::is_base_of_v<db::Entity, Entity_T>
     const QList<std::shared_ptr<Entity_T>> getCached() {
         return getListOfType<Entity_T>();
     }
 
     template<typename Entity_T, typename Related_T>
+    requires std::is_base_of_v<db::Entity, Entity_T> &&
+             std::is_base_of_v<db::Entity, Related_T>
     const QList<std::shared_ptr<Related_T>> getRelatedEntitiesOf(std::shared_ptr<const Entity_T> entity) {
         std::set<int> relatedEntityIdSet;
         if constexpr (std::is_same_v<Entity_T, db::Fruit> &&
@@ -59,7 +63,7 @@ public:
                 relatedEntityIdSet.insert(relation.second);
             }
         }
-        if constexpr (std::is_same_v<Entity_T, db::User> &&
+        else if constexpr (std::is_same_v<Entity_T, db::User> &&
                       std::is_same_v<Related_T, db::Fruit>)
         {
             for (const auto& relation : fruitUserRelations_
@@ -88,41 +92,63 @@ public:
     }
 
     template<typename Entity_T>
+    requires std::is_base_of_v<db::Entity, Entity_T>
     std::shared_ptr<Entity_T> cache(Entity_T* adminRawPtr) {
         auto entity = std::shared_ptr<Entity_T>(adminRawPtr);
         getListOfType<Entity_T>().append(entity);
         return entity;
     }
 
+    template<typename Entity_T>
+    requires std::is_base_of_v<db::Entity, Entity_T>
+    void remove(std::shared_ptr<Entity_T> entity) {
+        getListOfType<Entity_T>().removeOne(entity);
+        if constexpr (std::is_same_v<Entity_T, db::Fruit>) {
+            std::erase_if(fruitUserRelations_, [entity](std::pair<int, int> pair) {
+                return pair.first == entity->getId();
+            });
+        } else if constexpr (std::is_same_v<Entity_T, db::User>) {
+            std::erase_if(fruitUserRelations_, [entity](std::pair<int, int> pair) {
+                return pair.second == entity->getId();
+            });
+        }
+    }
+
     template<typename Entity_T, typename Related_T>
+    requires std::is_base_of_v<db::Entity, Entity_T> &&
+             std::is_base_of_v<db::Entity, Related_T>
     void link(std::shared_ptr<Entity_T> a, std::shared_ptr<Related_T> b) {
         if constexpr (std::is_same_v<Entity_T, db::Fruit> &&
                       std::is_same_v<Related_T, db::User>)
         {
             fruitUserRelations_.insert(std::pair{a->getId(), b->getId()});
         }
-        if constexpr (std::is_same_v<Entity_T, db::User> &&
-                      std::is_same_v<Related_T, db::Fruit>)
+        else if constexpr (std::is_same_v<Entity_T, db::User> &&
+                           std::is_same_v<Related_T, db::Fruit>)
         {
             fruitUserRelations_.insert({b->getId(), a->getId()});
         }
     }
 
     template<typename Entity_T, typename Related_T>
+    requires std::is_base_of_v<db::Entity, Entity_T> &&
+             std::is_base_of_v<db::Entity, Related_T>
     void unlink(std::shared_ptr<Entity_T> a, std::shared_ptr<Related_T> b) {
         if constexpr (std::is_same_v<Entity_T, db::Fruit> &&
                       std::is_same_v<Related_T, db::User>)
         {
             fruitUserRelations_.erase(std::pair{a->getId(), b->getId()});
         }
-        if constexpr (std::is_same_v<Entity_T, db::User> &&
-                      std::is_same_v<Related_T, db::Fruit>)
+        else if constexpr (std::is_same_v<Entity_T, db::User> &&
+                           std::is_same_v<Related_T, db::Fruit>)
         {
             fruitUserRelations_.erase({b->getId(), a->getId()});
         }
     }
 
     template<typename Entity_T, typename Related_T>
+    requires std::is_base_of_v<db::Entity, Entity_T> &&
+             std::is_base_of_v<db::Entity, Related_T>
     void clearLinksOf(std::shared_ptr<Entity_T> entity) {
         if constexpr (std::is_same_v<Entity_T, db::Fruit> &&
                       std::is_same_v<Related_T, db::User>)

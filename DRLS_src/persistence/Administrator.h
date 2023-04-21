@@ -30,6 +30,8 @@ public:
     std::shared_ptr<Administrator> setUsername(const QString& username);
     std::shared_ptr<Administrator> setFullName(const QString& fullName);
 
+    void remove() override;
+
 private:
     QString username_;
     QString fullName_;

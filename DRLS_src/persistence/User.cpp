@@ -58,6 +58,8 @@ std::shared_ptr<User> User::setLastName(const QString& lastName) {
     return shared_from_this();
 }
 
+DEFINE_remove(User)
+
 // relations
 const QList<std::shared_ptr<Fruit>> User::getFruits() const {
     return entityCache_->getRelatedEntitiesOf<db::User, db::Fruit>(shared_from_this());

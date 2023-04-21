@@ -30,8 +30,7 @@ struct UserItem : public QListWidgetItem {
     std::shared_ptr<db::User> user;
 };
 
-class UsersTab : public QWidget
-{
+class UsersTab : public QWidget {
     Q_OBJECT
 
 public:
@@ -41,6 +40,8 @@ public:
     ~UsersTab();
 
 private:
+    void initMassEditConnections();
+    void initEditorComponentsConnections();
     void initConnections();
 
     void refreshFields(std::shared_ptr<db::User> selectedUser);

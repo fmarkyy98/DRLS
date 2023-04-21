@@ -1,5 +1,7 @@
 #include "Administrator.h"
 
+#include "common/src/EntityCache.h"
+
 using namespace db;
 
 Administrator::Administrator(int id)
@@ -28,3 +30,5 @@ std::shared_ptr<Administrator> Administrator::setFullName(const QString& fullNam
 
     return shared_from_this();
 }
+
+DEFINE_remove(Administrator)

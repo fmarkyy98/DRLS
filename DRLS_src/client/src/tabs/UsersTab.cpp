@@ -24,65 +24,56 @@ UsersTab::~UsersTab()
     delete ui;
 }
 
-void UsersTab::initConnections() {
-    connect(ui->listWidget->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this] {
-        auto selectedUser = getSelectedUser();
-        refreshFields(selectedUser);
-    });
-
+void UsersTab::initMassEditConnections() {
     connect(ui->namePrefixComboBox, &QComboBox::currentTextChanged, this, [this](const QString& text) {
         auto selectedUser = getSelectedUser();
-        if (selectedUser == nullptr && editMode_ != EditMode::MassEdit)
+        if (selectedUser == nullptr || editMode_ != EditMode::MassEdit)
             return;
 
         selectedUser->setNamePrefix(text != "(none)" ? std::optional(text) : std::nullopt);
+        refreshDisplayName();
     });
 
     connect(ui->firstNameLineEdit, &QLineEdit::editingFinished, this, [this] {
         auto selectedUser = getSelectedUser();
-        if (selectedUser == nullptr && editMode_ != EditMode::MassEdit)
+        if (selectedUser == nullptr || editMode_ != EditMode::MassEdit)
             return;
 
         selectedUser->setFirstName(ui->firstNameLineEdit->text());
+        refreshDisplayName();
     });
 
     connect(ui->midleNameLineEdit, &QLineEdit::editingFinished, this, [this] {
         auto selectedUser = getSelectedUser();
-        if (selectedUser == nullptr && editMode_ != EditMode::MassEdit)
+        if (selectedUser == nullptr || editMode_ != EditMode::MassEdit)
             return;
 
-        selectedUser->setFirstName(ui->firstNameLineEdit->text());
+        auto text = ui->midleNameLineEdit->text();
+        selectedUser->setMidleName(!text.isEmpty() ? std::optional(text) : std::nullopt);
+        refreshDisplayName();
     });
 
     connect(ui->lastNameLineEdit, &QLineEdit::editingFinished, this, [this] {
         auto selectedUser = getSelectedUser();
-        if (selectedUser == nullptr && editMode_ != EditMode::MassEdit)
+        if (selectedUser == nullptr || editMode_ != EditMode::MassEdit)
             return;
 
         selectedUser->setLastName(ui->lastNameLineEdit->text());
+        refreshDisplayName();
     });
+}
 
-    connect(ui->addButton, &QPushButton::clicked, this, [this] {
-        auto newUser =
-            entityService_->create<db::User>()
-                ->setFirstName("New")
-                ->setLastName("User");
-
-
-        auto item = new UserItem(newUser, "New User", ui->listWidget);
-        ui->listWidget->addItem(item);
-        ui->listWidget->clearSelection();
-        ui->listWidget->selectionModel()->select(ui->listWidget->indexFromItem(item), QItemSelectionModel::Select);
-    });
-
+void UsersTab::initEditorComponentsConnections() {
     connect(ui->massEditButton, &QPushButton::clicked, this, [this] {
         resourceLockService_
             ->acquireLocks({{common::LockableResource(db::EntityType::User),
                              common::ResourceLockType::Write}},
                            context)
             ->onResultAvailable([this](bool result) {
-                if (result)
-                    setEditMode(EditMode::MassEdit);
+                if (!result)
+                    return;
+
+                setEditMode(EditMode::MassEdit);
             })
             ->runUnmanaged();
     });
@@ -108,8 +99,10 @@ void UsersTab::initConnections() {
                              common::ResourceLockType::Write}},
                            context)
             ->onResultAvailable([this](bool result) {
-                if (result)
-                    setEditMode(EditMode::SingleEdit);
+                if (!result)
+                    return;
+
+                setEditMode(EditMode::SingleEdit);
             })
             ->runUnmanaged();
     });
@@ -118,6 +111,9 @@ void UsersTab::initConnections() {
         auto user = getSelectedUser();
         if (user == nullptr)
             return;
+
+        persistFields(user);
+        refreshDisplayName();
 
         resourceLockService_
             ->releaseLocks({{common::LockableResource(db::EntityType::User, user->getId()),
@@ -134,6 +130,8 @@ void UsersTab::initConnections() {
         if (user == nullptr)
             return;
 
+        refreshFields(user);
+
         resourceLockService_
             ->releaseLocks({{common::LockableResource(db::EntityType::User, user->getId()),
                              common::ResourceLockType::Write}},
@@ -142,6 +140,44 @@ void UsersTab::initConnections() {
                 setEditMode(EditMode::NoEdit);
             })
             ->runUnmanaged();
+    });
+}
+
+void UsersTab::initConnections() {
+    initMassEditConnections();
+
+    initEditorComponentsConnections();
+
+    connect(ui->listWidget->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this] {
+        auto selectedUser = getSelectedUser();
+        refreshFields(selectedUser);
+    });
+
+    connect(ui->addButton, &QPushButton::clicked, this, [this] {
+        auto newUser =
+            entityService_->create<db::User>()
+                ->setFirstName("New")
+                ->setLastName("User");
+
+
+        auto item = new UserItem(newUser, "New User", ui->listWidget);
+        ui->listWidget->addItem(item);
+        ui->listWidget->clearSelection();
+        ui->listWidget->selectionModel()->select(ui->listWidget->indexFromItem(item), QItemSelectionModel::Select);
+    });
+
+    connect(ui->removeButton, &QPushButton::clicked, this, [this] {
+        auto user = getSelectedUser();
+        if (user == nullptr)
+            return;
+
+        auto selectedItems = ui->listWidget->selectedItems();
+        if (selectedItems.count() != 1)
+            return;
+
+        delete selectedItems.first();
+
+        user->remove();
     });
 }
 
@@ -155,6 +191,22 @@ void UsersTab::refreshFields(std::shared_ptr<db::User> selectedUser) {
     ui->firstNameLineEdit->setText(selectedUser->getFirstName());
     ui->midleNameLineEdit->setText(selectedUser->getMidleName().value_or(""));
     ui->lastNameLineEdit->setText(selectedUser->getLastName());
+}
+
+void UsersTab::persistFields(std::shared_ptr<db::User> selectedUser) {
+    if (selectedUser == nullptr)
+        return;
+
+    auto prefix = ui->namePrefixComboBox->currentText();
+    auto firstName = ui->firstNameLineEdit->text();
+    auto midleName = ui->midleNameLineEdit->text();
+    auto lastName = ui->lastNameLineEdit->text();
+
+    selectedUser
+        ->setNamePrefix(prefix != "(none)" ? std::optional(prefix) : std::nullopt)
+        ->setFirstName(firstName)
+        ->setMidleName(!midleName.isEmpty() ? std::optional(midleName) : std::nullopt)
+        ->setLastName(lastName);
 }
 
 std::shared_ptr<db::User> UsersTab::getSelectedUser() const {
@@ -226,5 +278,18 @@ void UsersTab::setEditMode(EditMode editMode) {
 }
 
 void UsersTab::refreshDisplayName() {
+    auto selectedItems = ui->listWidget->selectedItems();
+    if (selectedItems.count() != 1)
+        return;
 
+    auto selectedItem = selectedItems.first();
+    auto user = static_cast<UserItem*>(selectedItems.first())->user;
+
+    QString name;
+    name.append(user->getNamePrefix() ? user->getNamePrefix()->append(' ') : "")
+        .append(user->getFirstName().append(' '))
+        .append(user->getMidleName() ? user->getMidleName()->first(1).append(". ") : "")
+        .append(user->getLastName());
+
+    selectedItem->setText(name);
 }
