@@ -93,8 +93,8 @@ public:
 
     template<typename Entity_T>
     requires std::is_base_of_v<db::Entity, Entity_T>
-    std::shared_ptr<Entity_T> cache(Entity_T* adminRawPtr) {
-        auto entity = std::shared_ptr<Entity_T>(adminRawPtr);
+    std::shared_ptr<Entity_T> cache(Entity_T* entityRawPtr) {
+        auto entity = std::shared_ptr<Entity_T>(entityRawPtr);
         getListOfType<Entity_T>().append(entity);
         return entity;
     }
@@ -186,4 +186,4 @@ private:
     std::set<std::pair<int, int>> fruitUserRelations_;
 };
 
-} //  namespace common
+} // namespace common

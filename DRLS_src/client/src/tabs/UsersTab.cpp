@@ -7,7 +7,7 @@ const common::CallerContext UsersTab::context = common::CallerContext(token, adm
 
 UsersTab::UsersTab(std::shared_ptr<common::EntityService> entityService,
                    std::shared_ptr<common::IResourceLockService> resourceLockService,
-                                       QWidget* parent)
+                   QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::UsersTab)
     , entityService_(entityService)
@@ -16,6 +16,7 @@ UsersTab::UsersTab(std::shared_ptr<common::EntityService> entityService,
     ui->setupUi(this);
 
     initConnections();
+    populateList();
     setEditMode(EditMode::NoEdit);
 }
 
@@ -160,7 +161,7 @@ void UsersTab::initConnections() {
                 ->setLastName("User");
 
 
-        auto item = new UserItem(newUser, "New User", ui->listWidget);
+        auto item = new UserItem(newUser, newUser->getFullName(), ui->listWidget);
         ui->listWidget->addItem(item);
         ui->listWidget->clearSelection();
         ui->listWidget->selectionModel()->select(ui->listWidget->indexFromItem(item), QItemSelectionModel::Select);
@@ -179,6 +180,14 @@ void UsersTab::initConnections() {
 
         user->remove();
     });
+}
+
+void UsersTab::populateList() {
+    ui->listWidget->clear();
+    for (auto user : entityService_->getAll<db::User>()) {
+        auto item = new UserItem(user, user->getFullName(), ui->listWidget);
+        ui->listWidget->addItem(item);
+    }
 }
 
 void UsersTab::refreshFields(std::shared_ptr<db::User> selectedUser) {
@@ -285,11 +294,5 @@ void UsersTab::refreshDisplayName() {
     auto selectedItem = selectedItems.first();
     auto user = static_cast<UserItem*>(selectedItems.first())->user;
 
-    QString name;
-    name.append(user->getNamePrefix() ? user->getNamePrefix()->append(' ') : "")
-        .append(user->getFirstName().append(' '))
-        .append(user->getMidleName() ? user->getMidleName()->first(1).append(". ") : "")
-        .append(user->getLastName());
-
-    selectedItem->setText(name);
+    selectedItem->setText(user->getFullName());
 }

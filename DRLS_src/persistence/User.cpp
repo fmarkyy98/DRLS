@@ -1,4 +1,5 @@
 #include <QList>
+#include <QString>
 
 #include "User.h"
 
@@ -31,7 +32,11 @@ QString User::getLastName() const {
 
 // non trivial getters
 QString User::getFullName() const {
-    return namePrefix_.value_or("") + firstName_ + midleName_.value_or("") + lastName_;
+    return QString()
+        .append(getNamePrefix() ? getNamePrefix()->append(' ') : "")
+        .append(getFirstName().append(' '))
+        .append(getMidleName() ? getMidleName()->first(1).append(". ") : "")
+        .append(getLastName());
 }
 
 std::shared_ptr<User> User::setNamePrefix(const std::optional<QString>& namePrefix) {

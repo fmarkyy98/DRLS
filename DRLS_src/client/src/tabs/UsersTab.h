@@ -3,18 +3,14 @@
 #include <QWidget>
 #include <QListWidgetItem>
 
+#include "base/MasterDetailWidhetBase.h"
+
 #include "common/src/service/EntityService.h"
 #include "common/src/service/interface/IResourceLockService.h"
 
 #include "persistence/User.h"
 
 namespace view {
-
-enum class EditMode {
-    NoEdit,
-    SingleEdit,
-    MassEdit
-};
 
 namespace Ui { class UsersTab; }
 
@@ -43,6 +39,8 @@ private:
     void initMassEditConnections();
     void initEditorComponentsConnections();
     void initConnections();
+
+    void populateList();
 
     void refreshFields(std::shared_ptr<db::User> selectedUser);
     void persistFields(std::shared_ptr<db::User> selectedUser);

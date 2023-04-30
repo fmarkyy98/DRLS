@@ -16,7 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->usersTab->layout()->addWidget(new UsersTab(common::EntityService::getInstance(),
                                                    common::ResourceLockService::getInstance()));
-    ui->fruitsTab->layout()->addWidget(new FruitsTab(common::EntityService::getInstance()));
+    ui->fruitsTab->layout()->addWidget(new FruitsTab(common::EntityService::getInstance(),
+                                                     common::ResourceLockService::getInstance()));
 }
 
 MainWindow::~MainWindow()

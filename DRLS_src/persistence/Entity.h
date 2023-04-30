@@ -7,7 +7,6 @@
 #define DELETE_COPY_MOVE_SEMANTICS(ENTITY_TYPE)      \
 ENTITY_TYPE(const ENTITY_TYPE&) = delete;            \
 ENTITY_TYPE(ENTITY_TYPE&&) = delete;                 \
-                                                     \
 ENTITY_TYPE& operator=(const ENTITY_TYPE&) = delete; \
 ENTITY_TYPE& operator=(ENTITY_TYPE&&) = delete;
 
