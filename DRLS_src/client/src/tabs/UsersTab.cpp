@@ -164,7 +164,8 @@ void UsersTab::initConnections() {
         auto item = new UserItem(newUser, newUser->getFullName(), ui->listWidget);
         ui->listWidget->addItem(item);
         ui->listWidget->clearSelection();
-        ui->listWidget->selectionModel()->select(ui->listWidget->indexFromItem(item), QItemSelectionModel::Select);
+        ui->listWidget->selectionModel()->select(ui->listWidget->indexFromItem(item),
+                                                 QItemSelectionModel::Select);
     });
 
     connect(ui->removeButton, &QPushButton::clicked, this, [this] {

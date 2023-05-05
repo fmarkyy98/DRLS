@@ -18,7 +18,7 @@ class User
     friend class common::EntityService;
 
 private:
-    User(int id);
+    User();
 
 public:
     ~User() = default;
@@ -46,8 +46,8 @@ public:
     const QList<std::shared_ptr<Fruit>> getFruits() const;
 
     std::shared_ptr<User> clearFruits();
-    std::shared_ptr<User> addFruit(std::shared_ptr<db::User> fruitToAdd);
-    std::shared_ptr<User> removeFruit(std::shared_ptr<db::User> fruitToRemove);
+    std::shared_ptr<User> addFruit(std::shared_ptr<db::Fruit> fruitToAdd);
+    std::shared_ptr<User> removeFruit(std::shared_ptr<db::Fruit> fruitToRemove);
 
 private:
     std::optional<QString> namePrefix_;
@@ -56,6 +56,7 @@ private:
     QString lastName_;
 
 private:
+    static int nextId_;
     static constexpr EntityType entityType_ = EntityType::User;
 };
 

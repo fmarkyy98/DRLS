@@ -38,8 +38,5 @@ QList<int> common::EntityService::getAllIds<db::Fruit>() {
 
 template<>
 std::shared_ptr<db::Fruit> common::EntityService::create() {
-    QList<int> ids = getAllIds<db::Fruit>();
-    auto maxId = std::reduce(ids.begin(), ids.end(), 1, std::greater<int>());
-
-    return entityCache_->cache(new db::Fruit(maxId + 1));
+    return entityCache_->cache(new db::Fruit());
 }

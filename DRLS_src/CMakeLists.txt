@@ -28,6 +28,10 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 set(PROJECT_SOURCES
+    client/src/dialogs/FruitUserRelationsDialog.h
+    client/src/dialogs/FruitUserRelationsDialog.cpp
+    client/src/dialogs/FruitUserRelationsDialog.ui
+
     client/src/tabs/FruitsTab.h
     client/src/tabs/FruitsTab.cpp
     client/src/tabs/FruitsTab.ui

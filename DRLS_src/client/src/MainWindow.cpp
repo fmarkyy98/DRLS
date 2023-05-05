@@ -3,6 +3,7 @@
 
 #include "tabs/FruitsTab.h"
 #include "tabs/UsersTab.h"
+#include "dialogs/FruitUserRelationsDialog.h"
 
 #include "common/src/service/ResourceLockService.h"
 
@@ -18,6 +19,13 @@ MainWindow::MainWindow(QWidget *parent)
                                                    common::ResourceLockService::getInstance()));
     ui->fruitsTab->layout()->addWidget(new FruitsTab(common::EntityService::getInstance(),
                                                      common::ResourceLockService::getInstance()));
+
+    connect(ui->fruitUserAction, &QAction::triggered, this, [] {
+        FruitUserRelationsDialog dialog(common::EntityService::getInstance(),
+                                        common::ResourceLockService::getInstance());
+        dialog.setModal(true);
+        dialog.exec();
+    });
 }
 
 MainWindow::~MainWindow()

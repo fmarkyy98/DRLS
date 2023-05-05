@@ -16,7 +16,7 @@ class Fruit
     friend class common::EntityService;
 
 private:
-    Fruit(int id);
+    Fruit();
 
 public:
     ~Fruit() = default;
@@ -42,6 +42,7 @@ private:
     QString name_;
 
 private:
+    static int nextId_;
     static constexpr EntityType entityType_ = EntityType::Fruit;
 };
 

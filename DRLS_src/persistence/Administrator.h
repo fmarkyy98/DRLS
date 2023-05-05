@@ -15,7 +15,7 @@ class Administrator
     friend class common::EntityService;
 
 private:
-    Administrator(int id);
+    Administrator();
 
 public:
     ~Administrator() = default;
@@ -37,6 +37,7 @@ private:
     QString fullName_;
 
 private:
+    static int nextId_;
     static constexpr EntityType entityType_ = EntityType::Administrator;
 };
 

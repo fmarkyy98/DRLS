@@ -7,8 +7,10 @@
 
 using namespace db;
 
-User::User(int id)
-    : Entity(id)
+int User::nextId_ = 1;
+
+User::User()
+    : Entity(nextId_++)
     , std::enable_shared_from_this<User>()
 {}
 
@@ -76,13 +78,13 @@ std::shared_ptr<User> User::clearFruits() {
     return shared_from_this();
 }
 
-std::shared_ptr<User> User::addFruit(std::shared_ptr<db::User> fruitToAdd) {
+std::shared_ptr<User> User::addFruit(std::shared_ptr<db::Fruit> fruitToAdd) {
     entityCache_->link(shared_from_this(), fruitToAdd);
 
     return shared_from_this();
 }
 
-std::shared_ptr<User> User::removeFruit(std::shared_ptr<db::User> fruitToRemove) {
+std::shared_ptr<User> User::removeFruit(std::shared_ptr<db::Fruit> fruitToRemove) {
     entityCache_->unlink(shared_from_this(), fruitToRemove);
 
     return shared_from_this();

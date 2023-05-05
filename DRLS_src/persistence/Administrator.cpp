@@ -4,8 +4,10 @@
 
 using namespace db;
 
-Administrator::Administrator(int id)
-    : Entity(id)
+int Administrator::nextId_ = 1;
+
+Administrator::Administrator()
+    : Entity(nextId_++)
     , std::enable_shared_from_this<Administrator>()
 {}
 

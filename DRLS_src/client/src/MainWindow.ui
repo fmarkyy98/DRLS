@@ -92,14 +92,20 @@
      <height>22</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuEdit_relations">
+   <widget class="QMenu" name="relationsMenu">
     <property name="title">
      <string>Edit relations</string>
     </property>
+    <addaction name="fruitUserAction"/>
    </widget>
-   <addaction name="menuEdit_relations"/>
+   <addaction name="relationsMenu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="fruitUserAction">
+   <property name="text">
+    <string>Fruit - User</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
