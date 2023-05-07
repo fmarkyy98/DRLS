@@ -1,8 +1,21 @@
 #include "DelayedResourceLockService.h"
 
+#include "common/src/service/ResourceLockService.h"
+
 #include "utils/Finally.h"
 
 using namespace common;
+
+std::shared_ptr<DelayedResourceLockService> DelayedResourceLockService::instance_;
+
+std::shared_ptr<DelayedResourceLockService> DelayedResourceLockService::getInstance() {
+    if (instance_ == nullptr)
+        instance_ = std::shared_ptr<DelayedResourceLockService>(
+            new DelayedResourceLockService(common::ResourceLockService::getInstance(),
+                                           common::AsyncTaskService::getInstance()));
+
+    return instance_;
+}
 
 DelayedResourceLockService::DelayedResourceLockService(
         std::shared_ptr<IResourceLockService> resourceLockService,
@@ -24,7 +37,6 @@ DelayedResourceLockService::DelayedResourceLockService(
 
                     if (!isEmpty)
                         onLocksChanged();
-
                 } else {
                     hasMissedSignal_ = true;
                 }
@@ -51,6 +63,7 @@ void DelayedResourceLockService::onLocksChanged() {
 
     auto onResourceAvailableCallback = [this, releaseCallback](auto& it, bool result) {
         if (result) {
+            qDebug() << "[DRLS] Executing Previously queued task";
             (*it)->task_
             ->onEnded([it, releaseCallback](auto /*result*/, bool /*success*/) {
                 releaseCallback(it);
@@ -168,11 +181,11 @@ void DelayedResourceLockService::manageAddedAsyncLock(
             if (std::holds_alternative<common::CallerContext>(contextOrTag)) {
                 resourceLockService_
                         ->releaseLocks(resources, std::get<common::CallerContext>(contextOrTag))
-                        ->runSync();
+                        ->runUnmanaged();
             } else {
                 resourceLockService_
                         ->releaseSystemLocks(resources, std::get<QString>(contextOrTag))
-                        ->runSync();
+                        ->runUnmanaged();
             }
         }
     };
@@ -180,21 +193,24 @@ void DelayedResourceLockService::manageAddedAsyncLock(
     auto onResultAvailableCallback =
             [this, task, timeoutMs, asyncLock, release, timeoutTask](bool result)
     {
-                if (result) {
-                    task->onEnded([release](auto, bool) { release(); }, false)->runUnmanaged();
-                } else {
-                    {
-                        auto lock = std::lock_guard(asyncLocksMutex_);
-                        asyncLocks_.append(asyncLock);
-                    }
+        if (result) {
+            qDebug() << "[DRLS] Resources are available, executing task without delay";
+            task->onEnded([release](auto, bool) { release(); }, false)->runUnmanaged();
+        } else {
+            qDebug() << "[DRLS] Resources are unavailable, queued task for Delayed execution";
+            {
+                auto lock = std::lock_guard(asyncLocksMutex_);
+                asyncLocks_.append(asyncLock);
+            }
 
-                    QTimer::singleShot(timeoutMs, asyncLock->guard_, [release, timeoutTask] {
-                        release();
-                        if (timeoutTask != nullptr)
-                            timeoutTask->runUnmanaged();
-                    });
-                }
-            };
+            QTimer::singleShot(timeoutMs, asyncLock->guard_.get(), [release, timeoutTask] {
+                qDebug() << "[DRLS] Queued task timed out";
+                release();
+                if (timeoutTask != nullptr)
+                    timeoutTask->runUnmanaged();
+            });
+        }
+    };
 
     if (std::holds_alternative<common::CallerContext>(contextOrTag)) {
         resourceLockService_
@@ -205,7 +221,8 @@ void DelayedResourceLockService::manageAddedAsyncLock(
                 })
                 ->run<ManagedTaskBehaviour::CancelOnExit>(this);
     } else {
-        resourceLockService_->acquireSystemLocks(resources, std::get<QString>(contextOrTag))
+        resourceLockService_
+                ->acquireSystemLocks(resources, std::get<QString>(contextOrTag))
                 ->onResultAvailable(onResultAvailableCallback)
                 ->onFailed([this](auto task) {  // Exception from aquireLocks()
                     qWarning() << logOnFailure(task);

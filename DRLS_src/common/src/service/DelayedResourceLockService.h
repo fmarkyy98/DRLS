@@ -21,10 +21,14 @@ class DelayedResourceLockService
     Q_OBJECT
 
 public:
+    static std::shared_ptr<DelayedResourceLockService> getInstance();
+
+private:
     DelayedResourceLockService(
             std::shared_ptr<IResourceLockService> resourceLockService,
             std::shared_ptr<common::AsyncTaskService> asyncTaskService);
 
+public:
     void addAsyncLock(CallerContext context,
                       std::map<LockableResource, ResourceLockType> resources,
                       AsyncTaskPtr task,
@@ -37,6 +41,9 @@ public:
                             int timeoutMs,
                             AsyncTaskPtr timeoutTask = nullptr) override;
 
+signals:
+    void lastTaskEnded();
+
 private slots:
     void onLocksChanged();
 
@@ -45,7 +52,7 @@ private:
         std::variant<common::CallerContext, QString> contextOrTag_;
         std::map<common::LockableResource, common::ResourceLockType> resources_;
         AsyncTaskPtr task_;
-        QObject* guard_;
+        std::unique_ptr<QObject> guard_ = std::make_unique<QObject>();
 
         AsyncLock(common::CallerContext context,
                   std::map<common::LockableResource, common::ResourceLockType> resources,
@@ -53,16 +60,15 @@ private:
             : contextOrTag_(context)
             , resources_(resources)
             , task_(task)
-            , guard_(new QObject())
         {}
 
         AsyncLock(QString tag,
                   std::map<common::LockableResource, common::ResourceLockType> resources,
                   AsyncTaskPtr task)
-            : contextOrTag_(tag), resources_(resources), task_(task), guard_(new QObject())
+            : contextOrTag_(tag)
+            , resources_(resources)
+            , task_(task)
         {}
-
-        ~AsyncLock() { delete guard_; }
     };
 
 private:
@@ -83,8 +89,8 @@ private:
     std::atomic_bool inProgress_      = false;
     std::atomic_bool hasMissedSignal_ = false;
 
-signals:
-    void lastTaskEnded();
+private:
+    static std::shared_ptr<DelayedResourceLockService> instance_;
 };
 
 }  // namespace common

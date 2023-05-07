@@ -6,15 +6,19 @@
 #include "client/src/tabs/FruitsTab.h"
 #include "client/src/tabs/UsersTab.h"
 
+#include "common/src/service/AsyncTaskService.h"
+
 using namespace view;
 
 const common::CallerContext FruitUserRelationsDialog::context = common::CallerContext(token, adminUserName);
 
 FruitUserRelationsDialog::FruitUserRelationsDialog(
+            std::shared_ptr<common::AsyncTaskService> asyncTaskService,
             std::shared_ptr<common::EntityService> entityService,
             std::shared_ptr<common::IResourceLockService> resourceLockService,
             QWidget *parent)
     : QDialog(parent)
+    , TaskManager<common::CancellableOnly>(asyncTaskService)
     , ui(new Ui::FruitUserRelationsDialog)
     , entityService_(entityService)
     , resourceLockService_(resourceLockService)
@@ -32,9 +36,8 @@ FruitUserRelationsDialog::FruitUserRelationsDialog(
 
 FruitUserRelationsDialog::~FruitUserRelationsDialog()
 {
-    delete ui;
-
     releaseResources();
+    delete ui;
 }
 
 void FruitUserRelationsDialog::initConnections() {
@@ -66,6 +69,8 @@ void FruitUserRelationsDialog::initConnections() {
 void FruitUserRelationsDialog::lockResources() {
     resourceLockService_
         ->acquireLocks({{common::LockableResource(db::EntityType::Fruit),
+                         common::ResourceLockType::Write},
+                        {common::LockableResource(db::EntityType::User),
                          common::ResourceLockType::Write}},
                        context)
         ->onResultAvailable([this](bool result) {
@@ -73,39 +78,19 @@ void FruitUserRelationsDialog::lockResources() {
                 return;
 
             QMessageBox::warning(this,
-                                 "Unlockable fruit",
-                                 "Failes to lock fruit.\n"
+                                 "Unlockable resources",
+                                 "Failes to lock resources.\n"
                                  "Dialog will close automatically");
             close();
         })
-        ->runUnmanaged();
-
-    resourceLockService_
-        ->acquireLocks({{common::LockableResource(db::EntityType::User),
-                         common::ResourceLockType::Write}},
-                       context)
-        ->onResultAvailable([this](bool result) {
-            if (result)
-                return;
-
-            QMessageBox::warning(this,
-                                 "Unlockable users",
-                                 "Failes to lock users.\n"
-                                 "Dialog will close automatically");
-            close();
-        })
-        ->runUnmanaged();
+        ->run<common::ManagedTaskBehaviour::CancelOnExit>(this);
 }
 
 void FruitUserRelationsDialog::releaseResources() {
     resourceLockService_
         ->releaseLocks({{common::LockableResource(db::EntityType::Fruit),
-                         common::ResourceLockType::Write}},
-                       context)
-        ->runUnmanaged();
-
-    resourceLockService_
-        ->releaseLocks({{common::LockableResource(db::EntityType::User),
+                         common::ResourceLockType::Write},
+                        {common::LockableResource(db::EntityType::User),
                          common::ResourceLockType::Write}},
                        context)
         ->runUnmanaged();

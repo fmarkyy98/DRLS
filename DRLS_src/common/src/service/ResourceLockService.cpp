@@ -8,8 +8,6 @@
 
 using namespace common;
 
-const int ResourceLockService::SecondsToLive = 120;
-
 bool ResourceLockService::ResourceLock::operator==(const ResourceLock& other) const {
     return (this->adminId == other.adminId && this->adminToken == other.adminToken &&
             this->acquired == other.acquired && this->timeout == other.timeout &&
@@ -42,16 +40,9 @@ bool ResourceLockService::ResourceLock::operator<(const ResourceLock& other) con
     return false;
 }
 
-std::shared_ptr<ResourceLockService> ResourceLockService::instance_;
+const int ResourceLockService::SecondsToLive = 120;
 
-ResourceLockService::ResourceLockService(
-        std::shared_ptr<EntityService> entityService,
-        std::shared_ptr<common::AsyncTaskService> asyncTaskService)
-    : entityService_(entityService)
-    , asyncTaskService_(asyncTaskService)
-{
-    connectToChangedSignal();
-}
+std::shared_ptr<ResourceLockService> ResourceLockService::instance_;
 
 std::shared_ptr<ResourceLockService> ResourceLockService::getInstance() {
     if (instance_ == nullptr)
@@ -60,6 +51,15 @@ std::shared_ptr<ResourceLockService> ResourceLockService::getInstance() {
                                     common::AsyncTaskService::getInstance()));
 
     return instance_;
+}
+
+ResourceLockService::ResourceLockService(
+        std::shared_ptr<EntityService> entityService,
+        std::shared_ptr<common::AsyncTaskService> asyncTaskService)
+    : entityService_(entityService)
+    , asyncTaskService_(asyncTaskService)
+{
+    connectToChangedSignal();
 }
 
 AsyncTaskPtr ResourceLockService::listenLocksChanged(QString token,

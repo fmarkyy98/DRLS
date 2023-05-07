@@ -107,10 +107,6 @@ private:
     std::shared_ptr<db::Administrator> getAdmynByUsername(const QString& username) const;
 
 private:
-    static const int SecondsToLive;
-    static std::shared_ptr<ResourceLockService> instance_;
-
-private:
     std::shared_ptr<EntityService> entityService_;
     std::shared_ptr<AsyncTaskService> asyncTaskService_;
 
@@ -121,6 +117,10 @@ private:
     std::recursive_mutex changedMutex_;
 
     std::map<int, QList<ResourceLock>> locksByAdmins_;
+
+private:
+    static const int SecondsToLive;
+    static std::shared_ptr<ResourceLockService> instance_;
 };
 
 }  // namespace common

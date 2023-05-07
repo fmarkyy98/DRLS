@@ -5,10 +5,12 @@ using namespace view;
 
 const common::CallerContext UsersTab::context = common::CallerContext(token, adminUserName);
 
-UsersTab::UsersTab(std::shared_ptr<common::EntityService> entityService,
+UsersTab::UsersTab(std::shared_ptr<common::AsyncTaskService> asyncTaskService,
+                   std::shared_ptr<common::EntityService> entityService,
                    std::shared_ptr<common::IResourceLockService> resourceLockService,
                    QWidget* parent)
     : QWidget(parent)
+    , TaskManager<common::CancellableOnly>(asyncTaskService)
     , ui(new Ui::UsersTab)
     , entityService_(entityService)
     , resourceLockService_(resourceLockService)
@@ -76,7 +78,7 @@ void UsersTab::initEditorComponentsConnections() {
 
                 setEditMode(EditMode::MassEdit);
             })
-            ->runUnmanaged();
+            ->run<common::ManagedTaskBehaviour::CancelOnExit>(this);
     });
 
     connect(ui->finishMassEditButton, &QPushButton::clicked, this, [this] {
@@ -87,7 +89,7 @@ void UsersTab::initEditorComponentsConnections() {
             ->onFinished([this](...){
                 setEditMode(EditMode::NoEdit);
             })
-            ->runUnmanaged();
+            ->run<common::ManagedTaskBehaviour::CancelOnExit>(this);
     });
 
     connect(ui->editButton, &QPushButton::clicked, this, [this] {
@@ -96,7 +98,7 @@ void UsersTab::initEditorComponentsConnections() {
             return;
 
         resourceLockService_
-            ->acquireLocks({{common::LockableResource(db::EntityType::User, user->getId()),
+            ->acquireLocks({{common::LockableResource(db::EntityType::User),
                              common::ResourceLockType::Write}},
                            context)
             ->onResultAvailable([this](bool result) {
@@ -105,7 +107,7 @@ void UsersTab::initEditorComponentsConnections() {
 
                 setEditMode(EditMode::SingleEdit);
             })
-            ->runUnmanaged();
+            ->run<common::ManagedTaskBehaviour::CancelOnExit>(this);
     });
 
     connect(ui->saveButton, &QPushButton::clicked, this, [this] {
@@ -117,13 +119,13 @@ void UsersTab::initEditorComponentsConnections() {
         refreshDisplayName();
 
         resourceLockService_
-            ->releaseLocks({{common::LockableResource(db::EntityType::User, user->getId()),
+            ->releaseLocks({{common::LockableResource(db::EntityType::User),
                              common::ResourceLockType::Write}},
                            context)
             ->onFinished([this](...){
                 setEditMode(EditMode::NoEdit);
             })
-            ->runUnmanaged();
+            ->run<common::ManagedTaskBehaviour::CancelOnExit>(this);
     });
 
     connect(ui->revertButton, &QPushButton::clicked, this, [this] {
@@ -134,13 +136,13 @@ void UsersTab::initEditorComponentsConnections() {
         refreshFields(user);
 
         resourceLockService_
-            ->releaseLocks({{common::LockableResource(db::EntityType::User, user->getId()),
+            ->releaseLocks({{common::LockableResource(db::EntityType::User),
                              common::ResourceLockType::Write}},
                            context)
             ->onFinished([this](...){
                 setEditMode(EditMode::NoEdit);
             })
-            ->runUnmanaged();
+            ->run<common::ManagedTaskBehaviour::CancelOnExit>(this);
     });
 }
 

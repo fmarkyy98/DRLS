@@ -15,7 +15,12 @@ public:
     ~MainWindow();
 
 private:
+    void logUsersWithFruitPreferences();
+
+private:
     Ui::MainWindow *ui;
+
+    std::mutex logMutex;
 };
 
 } // namespace view

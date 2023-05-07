@@ -26,11 +26,15 @@ struct UserItem : public QListWidgetItem {
     std::shared_ptr<db::User> user;
 };
 
-class UsersTab : public QWidget {
+class UsersTab
+    : public QWidget
+    , public common::TaskManager<common::CancellableOnly>
+{
     Q_OBJECT
 
 public:
-    explicit UsersTab(std::shared_ptr<common::EntityService> entityService,
+    explicit UsersTab(std::shared_ptr<common::AsyncTaskService> asyncTaskService,
+                      std::shared_ptr<common::EntityService> entityService,
                       std::shared_ptr<common::IResourceLockService> resourceLockService,
                       QWidget* parent = nullptr);
     ~UsersTab();

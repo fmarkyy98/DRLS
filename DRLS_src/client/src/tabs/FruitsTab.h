@@ -26,12 +26,15 @@ struct FruitItem : public QListWidgetItem {
     std::shared_ptr<db::Fruit> fruit;
 };
 
-class FruitsTab : public QWidget
+class FruitsTab
+    : public QWidget
+    , public common::TaskManager<common::CancellableOnly>
 {
     Q_OBJECT
 
 public:
-    explicit FruitsTab(std::shared_ptr<common::EntityService> entityService,
+    explicit FruitsTab(std::shared_ptr<common::AsyncTaskService> asyncTaskService,
+                       std::shared_ptr<common::EntityService> entityService,
                        std::shared_ptr<common::IResourceLockService> resourceLockService,
                        QWidget* parent = nullptr);
     ~FruitsTab();

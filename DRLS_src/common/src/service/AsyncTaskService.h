@@ -180,6 +180,9 @@ public slots:
     bool deleteTask(std::shared_ptr<AsyncTask> task);
     void deleteAllTasks();
 
+public:
+    static bool log;
+
 signals:
     void numberOfTasksChanged(int registered, int running);
 

@@ -14,12 +14,15 @@ namespace Ui {
 class FruitUserRelationsDialog;
 }
 
-class FruitUserRelationsDialog : public QDialog
+class FruitUserRelationsDialog
+    : public QDialog
+    , public common::TaskManager<common::CancellableOnly>
 {
     Q_OBJECT
 
 public:
-    explicit FruitUserRelationsDialog(std::shared_ptr<common::EntityService> entityService,
+    explicit FruitUserRelationsDialog(std::shared_ptr<common::AsyncTaskService> asyncTaskService,
+                                      std::shared_ptr<common::EntityService> entityService,
                                       std::shared_ptr<common::IResourceLockService> resourceLockService,
                                       QWidget *parent = nullptr);
     ~FruitUserRelationsDialog();

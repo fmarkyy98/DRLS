@@ -44,8 +44,10 @@ AsyncTask::AsyncTask(std::shared_ptr<AsyncTaskService> taskService,
     {
         std::lock_guard<std::recursive_mutex> lock(aliveTasksCountMutex);
         aliveTasksCount++;
-        qDebug() << "Task created: " << reinterpret_cast<intptr_t>(this)
-                 << "(alive tasks: " << aliveTasksCount << ")";
+        if (AsyncTaskService::log)
+            if (AsyncTaskService::log)
+                qDebug() << "Task created: " << reinterpret_cast<intptr_t>(this)
+                         << "(alive tasks: " << aliveTasksCount << ")";
     }
 
 #ifdef DEBUG_SAVE_STACKTRACE
@@ -65,7 +67,7 @@ AsyncTask::~AsyncTask() {
     {
         std::lock_guard<std::recursive_mutex> lock(aliveTasksCountMutex);
         aliveTasksCount--;
-        qDebug() << "Task destroyed: " << reinterpret_cast<intptr_t>(this)
+        if (AsyncTaskService::log) qDebug() << "Task destroyed: " << reinterpret_cast<intptr_t>(this)
                  << "(alive tasks: " << aliveTasksCount << ")";
     }
 
@@ -80,7 +82,7 @@ AsyncTask::State AsyncTask::getState() const {
 void AsyncTask::setState(const AsyncTask::State& value) {
     auto sfthis = shared_from_this();
     auto v      = value;
-    //    qDebug() << "Set state request on task (" << reinterpret_cast<intptr_t>(this) << ")
+    //    if (AsyncTaskService::log) qDebug() << "Set state request on task (" << reinterpret_cast<intptr_t>(this) << ")
     //    from"
     //             << stateToString(state) << "to " << stateToString(v);
 
@@ -106,19 +108,19 @@ void AsyncTask::setState(const AsyncTask::State& value) {
         if (state != State::Running && (v == State::Cancelling || v == State::TimingOut ||
                                         v == State::Finishing || v == State::Failing))
         {
-            //            qDebug() << "Task's (" << reinterpret_cast<intptr_t>(this) << ") state
+            //            if (AsyncTaskService::log) qDebug() << "Task's (" << reinterpret_cast<intptr_t>(this) << ") state
             //            DIDN'T change to"
             //                     << stateToString(v) << "because it's not Running.";
             return;
         }
 
-        qDebug() << "Task's (" << reinterpret_cast<intptr_t>(this) << ") state changed from"
+        if (AsyncTaskService::log) qDebug() << "Task's (" << reinterpret_cast<intptr_t>(this) << ") state changed from"
                  << stateToString(state) << "to " << stateToString(v);
         state = v;
     }
 
     auto f = util::finally([this]() {
-        qDebug() << "Task's (" << reinterpret_cast<intptr_t>(this) << ") new state is"
+        if (AsyncTaskService::log) qDebug() << "Task's (" << reinterpret_cast<intptr_t>(this) << ") new state is"
                  << stateToString(state);
     });
 
@@ -162,7 +164,7 @@ void AsyncTask::setState(const AsyncTask::State& value) {
         emitEnded(true, v);
         if (v != State::Finishing && !subtasks.empty()) {
             std::lock_guard<std::recursive_mutex> lock(stateMutex);
-            qDebug() << "Canceling" << subtasks.count() << "subtasks of"
+            if (AsyncTaskService::log) qDebug() << "Canceling" << subtasks.count() << "subtasks of"
                      << reinterpret_cast<intptr_t>(this);
             for (auto subtask : subtasks) {
                 auto t = subtask.lock();
@@ -173,7 +175,7 @@ void AsyncTask::setState(const AsyncTask::State& value) {
     } else {
         if (v == State::Terminated && !subtasks.empty()) {
             std::lock_guard<std::recursive_mutex> lock(stateMutex);
-            qDebug() << "Terminating" << subtasks.count() << "subtasks of"
+            if (AsyncTaskService::log) qDebug() << "Terminating" << subtasks.count() << "subtasks of"
                      << reinterpret_cast<intptr_t>(this);
             for (auto subtask : subtasks) {
                 auto t = subtask.lock();
@@ -181,7 +183,7 @@ void AsyncTask::setState(const AsyncTask::State& value) {
                     t->terminate();
             }
 
-            qDebug() << "Clearing subtasks on termination of"
+            if (AsyncTaskService::log) qDebug() << "Clearing subtasks on termination of"
                      << reinterpret_cast<intptr_t>(this);
             subtasks.clear();
         }
@@ -213,7 +215,7 @@ void AsyncTask::setState(const AsyncTask::State& value) {
                 v = State::TimedOut;
 
             if (state != v) {
-                qDebug() << "Task's (" << reinterpret_cast<intptr_t>(this)
+                if (AsyncTaskService::log) qDebug() << "Task's (" << reinterpret_cast<intptr_t>(this)
                          << ") state changed from" << stateToString(state) << "to "
                          << stateToString(v);
                 state = v;
@@ -396,7 +398,7 @@ void AsyncTask::removeProgressHandler(const DelegateConnection& connection) {
 }
 
 bool AsyncTask::runCore(Priority priority) {
-    qDebug() << "Task (" << reinterpret_cast<intptr_t>(this)
+    if (AsyncTaskService::log) qDebug() << "Task (" << reinterpret_cast<intptr_t>(this)
              << ") is running on thread:" << QThread::currentThreadId()
              << "with priority:" << priorityToString(priority);
 
@@ -412,7 +414,7 @@ bool AsyncTask::runCore(Priority priority) {
     bool result = false;
 
     if (this->getState() != State::Running) {
-        qDebug() << "Task (" << reinterpret_cast<intptr_t>(this)
+        if (AsyncTaskService::log) qDebug() << "Task (" << reinterpret_cast<intptr_t>(this)
                  << ") has been cancelled before running.";
         return false;
     }
@@ -505,12 +507,12 @@ void AsyncTask::emitBasicSignals(const QList<std::shared_ptr<BasicSignalConnecti
     {
         std::lock_guard<std::recursive_mutex> lock(signalHandlerMutex);
         if (handlers.empty()) {
-            //            qDebug() << "No handlers for task" << reinterpret_cast<intptr_t>(this)
+            //            if (AsyncTaskService::log) qDebug() << "No handlers for task" << reinterpret_cast<intptr_t>(this)
             //                     << "- invocationState:" << stateToString(invocationState);
             return;
         }
 
-        qDebug() << "Emitting" << handlers.count() << " handlers of"
+        if (AsyncTaskService::log) qDebug() << "Emitting" << handlers.count() << " handlers of"
                  << reinterpret_cast<intptr_t>(this)
                  << "- invocationState:" << stateToString(invocationState);
 
@@ -538,7 +540,7 @@ void AsyncTask::emitBasicSignals(const QList<std::shared_ptr<BasicSignalConnecti
         {
             std::lock_guard<std::recursive_mutex> lock(signalHandlerMutex);
             if (!allowedHandlers.contains(invocationState)) {
-                qDebug() << "Emission of handlers has been interrupted due to changes in task's"
+                if (AsyncTaskService::log) qDebug() << "Emission of handlers has been interrupted due to changes in task's"
                          << reinterpret_cast<intptr_t>(this) << "state";
                 break;
             }
@@ -555,7 +557,7 @@ void AsyncTask::emitBasicSignals(const QList<std::shared_ptr<BasicSignalConnecti
         }
 
         //            bool restore = rawHandler->restoreContext;
-        //            qDebug() << "Doing dispatch - restore:" << restore << " task:"
+        //            if (AsyncTaskService::log) qDebug() << "Doing dispatch - restore:" << restore << " task:"
         //                     << reinterpret_cast<intptr_t>(this) << "pending handlers:" <<
         //                     static_cast<int>(this->pendingHandlers)
         //                     << "- invocationState:" << stateToString(invocationState);
@@ -573,13 +575,13 @@ void AsyncTask::emitBasicSignals(const QList<std::shared_ptr<BasicSignalConnecti
 
             (*noPendingHandlers).notify_all();
         });
-        //            qDebug() << "Done dispatch - restore:" << restore << " task:"
+        //            if (AsyncTaskService::log) qDebug() << "Done dispatch - restore:" << restore << " task:"
         //                     << reinterpret_cast<intptr_t>(this) << "pending handlers:" <<
         //                     static_cast<int>(this->pendingHandlers);
     }
 
     if (waitForCompletion) {
-        qDebug() << "Waiting handlers of" << reinterpret_cast<intptr_t>(this) << "to complete";
+        if (AsyncTaskService::log) qDebug() << "Waiting handlers of" << reinterpret_cast<intptr_t>(this) << "to complete";
 
         // wait all tasks to complete
         std::unique_lock<std::mutex> handlerLock(*waitHandlersMutex);
@@ -590,7 +592,7 @@ void AsyncTask::emitBasicSignals(const QList<std::shared_ptr<BasicSignalConnecti
             return (*pendingHandlers) == 0;
         });
 
-        qDebug() << "Handlers of" << reinterpret_cast<intptr_t>(this)
+        if (AsyncTaskService::log) qDebug() << "Handlers of" << reinterpret_cast<intptr_t>(this)
                  << "completed (or task has been terminated)";
     }
 }
@@ -610,7 +612,7 @@ void AsyncTask::prepareForDeletion() {
     }
 
     std::lock_guard<std::recursive_mutex> lock(signalHandlerMutex);
-    //    qDebug() << "Task (" << reinterpret_cast<intptr_t>(this) << ") is preparing for
+    //    if (AsyncTaskService::log) qDebug() << "Task (" << reinterpret_cast<intptr_t>(this) << ") is preparing for
     //    deletion.";
     startedHandlers.clear();
     finishedHandlers.clear();
@@ -777,14 +779,14 @@ void AsyncTask::connectBasicSignals(std::function<void(std::shared_ptr<AsyncTask
         if (task == nullptr)
             return;
 
-        //        qDebug() << "Preparing for dispatch of signal related to task ("
+        //        if (AsyncTaskService::log) qDebug() << "Preparing for dispatch of signal related to task ("
         //                    << reinterpret_cast<intptr_t>(this) << ").";
 
         // if signal handler invocation is suppressed by changes in task's state, do nothing
         {
             std::lock_guard<std::recursive_mutex> lock(signalHandlerMutex);
             if (!allowedHandlers.contains(*stateWhenInvokedPtr)) {
-                qDebug() << "Dispatching of signal has been canceled due to changes in task's ("
+                if (AsyncTaskService::log) qDebug() << "Dispatching of signal has been canceled due to changes in task's ("
                          << reinterpret_cast<intptr_t>(this) << ") state.";
                 return;
             }
@@ -798,7 +800,7 @@ void AsyncTask::connectBasicSignals(std::function<void(std::shared_ptr<AsyncTask
             std::lock_guard<std::recursive_mutex> lock(signalHandlerMutex);
             for (auto ptr : handlerList) {
                 if (ptr->connection == *connHolder) {
-                    //                    qDebug() << "Removing handler from: " <<
+                    //                    if (AsyncTaskService::log) qDebug() << "Removing handler from: " <<
                     //                    reinterpret_cast<intptr_t>(this) <<
                     //                    reinterpret_cast<intptr_t>(that)
                     //                             << "receiver: " <<

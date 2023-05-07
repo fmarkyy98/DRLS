@@ -11,6 +11,8 @@ using namespace common;
 
 #define MIN_THREAD_COUNT 4
 
+bool AsyncTaskService::log = false;
+
 std::shared_ptr<AsyncTaskService> AsyncTaskService::instance_;
 
 AsyncTaskService::AsyncTaskService()
@@ -18,8 +20,9 @@ AsyncTaskService::AsyncTaskService()
 {
     qRegisterMetaType<std::shared_ptr<AsyncTask>>("std::shared_ptr<AsyncTask>");
     mainThread = QThread::currentThread();
-    qDebug() << "Initializing AsyncTaskService - main thread is " << QThread::currentThreadId()
-             << "ptr:" << reinterpret_cast<intptr_t>(QThread::currentThread());
+    if (log)
+        qDebug() << "Initializing AsyncTaskService - main thread is " << QThread::currentThreadId()
+                 << "ptr:" << reinterpret_cast<intptr_t>(QThread::currentThread());
 
     // we use at least 4 threads
     if (pool->maxThreadCount() < MIN_THREAD_COUNT)
@@ -57,14 +60,17 @@ void AsyncTaskService::handleSubtaskTimeout(QList<std::shared_ptr<AsyncTask>> ta
             // stop timer for previous subtask
             timer->stop();
             timer->disconnect(SIGNAL(timeout()));
-            qDebug() << "Subtask timer stopped, new task:"
-                     << reinterpret_cast<intptr_t>(task.get());
+            if (log)
+                qDebug() << "Subtask timer stopped, new task:"
+                         << reinterpret_cast<intptr_t>(task.get());
 
             // if subtask has a timeout, use the timer
             if (task->getTimeout() > 0) {
-                qDebug() << "Subtask has a timeout:" << task->getTimeout();
+                if (log)
+                    qDebug() << "Subtask has a timeout:" << task->getTimeout();
                 connect(timer, &QTimer::timeout, [task]() {
-                    qDebug() << "Subtask timeout:" << reinterpret_cast<intptr_t>(task.get());
+                    if (log)
+                        qDebug() << "Subtask timeout:" << reinterpret_cast<intptr_t>(task.get());
                     task->setState(AsyncTask::State::TimingOut);
                 });
                 timer->start(task->getTimeout());
@@ -100,7 +106,8 @@ bool AsyncTaskService::checkOrigin(QList<std::shared_ptr<AsyncTask>> tasks) {
 void AsyncTaskService::modifyWorkersCount(int diff) {
     std::lock_guard<std::mutex> lock(poolMutex);
     pool->setMaxThreadCount(qMax(MIN_THREAD_COUNT, pool->maxThreadCount() + diff));
-    qDebug() << "AsyncTaskService: number of workers changed to" << pool->maxThreadCount();
+    if (log)
+        qDebug() << "AsyncTaskService: number of workers changed to" << pool->maxThreadCount();
 }
 
 void AsyncTaskService::doAsynchronously(std::function<void()> function, bool onExtraThread) {
@@ -131,10 +138,12 @@ bool AsyncTaskService::initSubtasks(std::shared_ptr<AsyncTask> self,
 {
     std::lock_guard<std::recursive_mutex> lock(self->stateMutex);
     if (self->getState() != AsyncTask::State::Running) {
-        qDebug() << compositeType << "(" << reinterpret_cast<intptr_t>(self.get())
-                 << ") has been cancelled before running. Subtasks:";
+        if (log)
+            qDebug() << compositeType << "(" << reinterpret_cast<intptr_t>(self.get())
+                     << ") has been cancelled before running. Subtasks:";
         for (auto& task : tasks) {
-            qDebug() << "    - " << reinterpret_cast<intptr_t>(task.get());
+            if (log)
+                qDebug() << "    - " << reinterpret_cast<intptr_t>(task.get());
             if (task->getAutoRemove())
                 this->deleteTask(task);
         }
@@ -142,10 +151,12 @@ bool AsyncTaskService::initSubtasks(std::shared_ptr<AsyncTask> self,
         return false;
     }
 
-    qDebug() << "Running" << compositeType << "(" << reinterpret_cast<intptr_t>(self.get())
-             << ") with " << tasks.count() << " subtasks:";
+    if (log)
+        qDebug() << "Running" << compositeType << "(" << reinterpret_cast<intptr_t>(self.get())
+                 << ") with " << tasks.count() << " subtasks:";
     for (auto& task : tasks) {
-        qDebug() << "    - " << reinterpret_cast<intptr_t>(task.get());
+        if (log)
+            qDebug() << "    - " << reinterpret_cast<intptr_t>(task.get());
         self->subtasks.append(task);
     }
 
@@ -179,13 +190,15 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createSequence(
 
             // if sequence aborted, also abort all further tasks
             if (!result) {
-                qDebug() << "Sequence is prevented from running its next subtask:"
-                         << reinterpret_cast<intptr_t>(task.get());
+                if (log)
+                    qDebug() << "Sequence is prevented from running its next subtask:"
+                             << reinterpret_cast<intptr_t>(task.get());
                 continue;
             }
 
-            qDebug() << "Sequence is running its next subtask:"
-                     << reinterpret_cast<intptr_t>(task.get());
+            if (log)
+                qDebug() << "Sequence is running its next subtask:"
+                         << reinterpret_cast<intptr_t>(task.get());
 
             // prevent deletion of task, run it synchronously
             task->setAutoRemove(false);
@@ -208,12 +221,14 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createSequence(
         }
 
         if (exception != nullptr) {
-            qDebug() << "Sequence (" << reinterpret_cast<intptr_t>(self.get())
-                     << ") rethrowing exception stored in the failed subtask.";
+            if (log)
+                qDebug() << "Sequence (" << reinterpret_cast<intptr_t>(self.get())
+                         << ") rethrowing exception stored in the failed subtask.";
             std::rethrow_exception(exception);
         }
 
-        qDebug() << "Sequence (" << reinterpret_cast<intptr_t>(self.get()) << ") returned.";
+        if (log)
+            qDebug() << "Sequence (" << reinterpret_cast<intptr_t>(self.get()) << ") returned.";
         return result;
     });
 
@@ -252,13 +267,15 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createFallback(
                 selfState == AsyncTask::State::TimedOut ||
                 selfState == AsyncTask::State::Finished ||
                 selfState == AsyncTask::State::Terminated) {
-                qDebug() << "Fallback is prevented from running its next subtask:"
-                         << reinterpret_cast<intptr_t>(task.get());
+                if (log)
+                    qDebug() << "Fallback is prevented from running its next subtask:"
+                             << reinterpret_cast<intptr_t>(task.get());
                 continue;
             }
 
-            qDebug() << "Fallback is running its next subtask:"
-                     << reinterpret_cast<intptr_t>(task.get());
+            if (log)
+                qDebug() << "Fallback is running its next subtask:"
+                         << reinterpret_cast<intptr_t>(task.get());
 
             // prevent deletion of task, run it synchronously
             task->setAutoRemove(false);
@@ -273,7 +290,8 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createFallback(
             }
         }
 
-        qDebug() << "Fallback (" << reinterpret_cast<intptr_t>(self.get()) << ") returned.";
+        if (log)
+            qDebug() << "Fallback (" << reinterpret_cast<intptr_t>(self.get()) << ") returned.";
         return result;
     });
 
@@ -362,8 +380,9 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createParallel(
                             return;
 
                         if (s->getState() != AsyncTask::State::Running) {
-                            qDebug() << "Parallel cancelled before running its subtask:"
-                                     << reinterpret_cast<intptr_t>(t.get());
+                            if (log)
+                                qDebug() << "Parallel cancelled before running its subtask:"
+                                         << reinterpret_cast<intptr_t>(t.get());
                             t->setState(s->getState());
                         }
                     },
@@ -424,8 +443,9 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createParallel(
             // adding extra thread - this control thread will do nothing
             ExtraThreadLock extraThread(shared_from_this());
 
-            qDebug() << "Parallel (" << reinterpret_cast<intptr_t>(self.get())
-                     << ") running its children.";
+            if (log)
+                qDebug() << "Parallel (" << reinterpret_cast<intptr_t>(self.get())
+                         << ") running its children.";
 
             // run all tasks asynchronously
             for (auto task : tasks)
@@ -445,8 +465,9 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createParallel(
             });
         }
 
-        qDebug() << "Parallel (" << reinterpret_cast<intptr_t>(self.get())
-                 << ") finished running all its children.";
+        if (log)
+            qDebug() << "Parallel (" << reinterpret_cast<intptr_t>(self.get())
+                     << ") finished running all its children.";
 
         // disconnect remaining connections
         for (auto& [task, conns] : startedConns)
@@ -469,8 +490,9 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createParallel(
         self->removeTerminatedHandler(selfTerminatedConn);
 
         if (*exception != nullptr) {
-            qDebug() << "Parallel (" << reinterpret_cast<intptr_t>(self.get())
-                     << ") rethrowing exception stored in the failed child task.";
+            if (log)
+                qDebug() << "Parallel (" << reinterpret_cast<intptr_t>(self.get())
+                         << ") rethrowing exception stored in the failed child task.";
             std::rethrow_exception(*exception);
         }
 
@@ -560,8 +582,9 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createAttempt(
                             return;
 
                         if (s->getState() != AsyncTask::State::Running) {
-                            qDebug() << "Attempt cancelled before running its subtask:"
-                                     << reinterpret_cast<intptr_t>(t.get());
+                            if (log)
+                                qDebug() << "Attempt cancelled before running its subtask:"
+                                         << reinterpret_cast<intptr_t>(t.get());
                             t->setState(s->getState());
                         }
                     },
@@ -615,8 +638,9 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createAttempt(
             // adding extra thread - this control thread will do nothing
             ExtraThreadLock extraThread(shared_from_this());
 
-            qDebug() << "Attempt (" << reinterpret_cast<intptr_t>(self.get())
-                     << ") running its children.";
+            if (log)
+                qDebug() << "Attempt (" << reinterpret_cast<intptr_t>(self.get())
+                         << ") running its children.";
 
             // run all tasks asynchronously
             for (auto& task : tasks)
@@ -636,8 +660,9 @@ std::shared_ptr<AsyncTask> AsyncTaskService::createAttempt(
             });
         }
 
-        qDebug() << "Attempt (" << reinterpret_cast<intptr_t>(self.get())
-                 << ") finished running all its children.";
+        if (log)
+            qDebug() << "Attempt (" << reinterpret_cast<intptr_t>(self.get())
+                     << ") finished running all its children.";
 
         // disconnect remaining connections
         for (auto& [task, conns] : startedConns)
@@ -814,8 +839,9 @@ void AsyncTaskService::runTask(std::shared_ptr<AsyncTask> task,
 
     task->setState(AsyncTask::State::Starting);
     if (task->isNoOpTask()) {
-        qDebug() << "Task (" << reinterpret_cast<intptr_t>(task.get())
-                 << ") does nothing... so it's finished.";
+        if (log)
+            qDebug() << "Task (" << reinterpret_cast<intptr_t>(task.get())
+                     << ") does nothing... so it's finished.";
         task->setState(AsyncTask::State::Finishing);
         return;
     }
@@ -828,14 +854,16 @@ void AsyncTaskService::runTask(std::shared_ptr<AsyncTask> task,
     QTimer* timer       = nullptr;
 
     if (task->getTimeout() > 0 && async) {
-        qDebug() << "Task has a timeout:" << task->getTimeout();
+        if (log)
+            qDebug() << "Task has a timeout:" << task->getTimeout();
         timerGuard = new QObject();
         timer      = new QTimer();
         timer->moveToThread(mainThread);
         timer->setSingleShot(true);
         timer->setInterval(task->getTimeout());
         connect(timer, &QTimer::timeout, [task]() {
-            qDebug() << "Task timeout: " << reinterpret_cast<intptr_t>(task.get());
+            if (log)
+                qDebug() << "Task timeout: " << reinterpret_cast<intptr_t>(task.get());
             task->setState(AsyncTask::State::TimingOut);
         });
 
@@ -853,8 +881,9 @@ void AsyncTaskService::runTask(std::shared_ptr<AsyncTask> task,
 
     auto function = [this, task, timerGuard, effectivePriority]() {
         if (task->isWaitingForDeletion()) {
-            qDebug() << "Task (" << reinterpret_cast<intptr_t>(this)
-                     << ") has been removed during async dispatching.";
+            if (log)
+                qDebug() << "Task (" << reinterpret_cast<intptr_t>(this)
+                         << ") has been removed during async dispatching.";
             return;
         }
 
@@ -883,7 +912,8 @@ void AsyncTaskService::runTask(std::shared_ptr<AsyncTask> task,
 
             std::lock_guard<std::recursive_mutex> lock(task->stateMutex);
             if (task->getState() != AsyncTask::State::Terminated && !task->subtasks.empty()) {
-                qDebug() << "Clearing subtasks of" << reinterpret_cast<intptr_t>(task.get());
+                if (log)
+                    qDebug() << "Clearing subtasks of" << reinterpret_cast<intptr_t>(task.get());
                 task->subtasks.clear();
             }
         });
