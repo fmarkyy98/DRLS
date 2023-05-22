@@ -34,9 +34,9 @@ public:
 
 private:
     template<typename Entity_T>
- // requires std::is_base_of_v<Entity_T, db::Entity>
+    requires std::is_base_of_v<Entity_T, db::Entity>
     static QList<std::shared_ptr<db::Entity>> downcastEntityList(
-            QList<std::shared_ptr<Entity_T>> list)
+            const QList<std::shared_ptr<Entity_T>>& list)
     {
         QList<std::shared_ptr<db::Entity>> result;
         std::transform(list.begin(), list.end(),
@@ -49,7 +49,9 @@ private:
 
     template<typename Entity_T>
  // requires std::is_base_of_v<Entity_T, db::Entity>
-    static QList<Entity_T> upcastEntityList(QList<db::Entity> list) {
+    static QList<std::shared_ptr<Entity_T>> upcastEntityList(
+        const QList<std::shared_ptr<db::Entity>>& list)
+    {
         QList<std::shared_ptr<Entity_T>> result;
         std::transform(list.begin(), list.end(),
                        std::back_inserter(result),
