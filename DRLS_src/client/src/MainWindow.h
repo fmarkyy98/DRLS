@@ -21,6 +21,9 @@ private:
     Ui::MainWindow *ui;
 
     std::mutex logMutex;
+
+    bool logOnCooldown_ = false;
+    int isEvenRun_ = true;
 };
 
 } // namespace view

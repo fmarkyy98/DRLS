@@ -255,6 +255,7 @@ AsyncFuncPtr<bool> ResourceLockService::acquireLocks(
             f->setResult(true);
         }
 
+        emit meta()->locksChanged();
     });
 }
 
@@ -331,6 +332,7 @@ AsyncTaskPtr ResourceLockService::releaseLocks(
         if (changedLocks.size() > 0)
             emit locksChanged(changedLocks);
 
+        emit meta()->locksChanged();
     });
 }
 
@@ -380,8 +382,8 @@ AsyncFuncPtr<bool> ResourceLockService::acquireSystemLocks(
 
             f->setResult(true);
         }
-        emit meta()->locksChanged();
 
+        emit meta()->locksChanged();
     });
 }
 
@@ -404,8 +406,8 @@ AsyncTaskPtr ResourceLockService::releaseSystemLocks(
                 }
             }
         }
-        emit meta()->locksChanged();
 
+        emit meta()->locksChanged();
     });
 }
 

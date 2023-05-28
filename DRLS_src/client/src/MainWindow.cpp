@@ -31,9 +31,18 @@ MainWindow::MainWindow(QWidget *parent)
         dialog.exec();
     });
     auto resourceLockService = common::ResourceLockService::getInstance();
-    connect(resourceLockService.get(), &common::ResourceLockService::locksChanged, this, [this] {
-        logUsersWithFruitPreferences();
-    });
+
+    connect(resourceLockService->meta(),
+            &common::IResourceLockService::Meta::locksChanged,
+            this,
+            [this] {
+                if (logOnCooldown_)
+                    return;
+
+                QTimer::singleShot(1000, this, [this] { logOnCooldown_ = false; });
+                logOnCooldown_ = true;
+                logUsersWithFruitPreferences();
+            });
 }
 
 MainWindow::~MainWindow()
@@ -45,9 +54,10 @@ void MainWindow::logUsersWithFruitPreferences() {
     auto asyncTaskService = common::AsyncTaskService::getInstance();
     auto entityService = common::EntityService::getInstance();
     auto drls = common::DelayedResourceLockService::getInstance();
+
     auto task = asyncTaskService->createTask([this, entityService](...) {
         std::unique_lock logLock{logMutex};
-        qDebug() << "[LIKE]" << "-----------------------------------------------------";
+        qDebug() << "[LIKE]" << "----------------------------------------------------";
         auto users = entityService->getAll<db::User>();
         if (users.isEmpty())
             qDebug() << "[LIKE]" << "no User found";
@@ -63,7 +73,7 @@ void MainWindow::logUsersWithFruitPreferences() {
             for (auto fruit : fruits)
                 qDebug() << "       -" << fruit->getName();
         }
-        qDebug() << "[LIKE]" << "-----------------------------------------------------";
+        qDebug() << "[LIKE]" << "----------------------------------------------------";
     });
 
     drls->addAsyncSystemLock("MainWindow::logUsersWithFruitPreferences" + QTime::currentTime().toString(),
