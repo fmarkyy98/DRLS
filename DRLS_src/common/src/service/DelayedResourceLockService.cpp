@@ -65,7 +65,7 @@ void DelayedResourceLockService::onLocksChanged() {
         if (result) {
             qDebug() << "[DRLS] Executing Previously queued task";
             (*it)->task_
-            ->onEnded([it, releaseCallback](auto /*result*/, bool /*success*/) {
+            ->onEnded([it, releaseCallback](...) {
                 releaseCallback(it);
             },
             false)
@@ -84,7 +84,7 @@ void DelayedResourceLockService::onLocksChanged() {
     };
 
     asyncTaskService_
-    ->createTask([this, onResourceAvailableCallback, onFailedCallback](auto /*task*/) {
+    ->createTask([this, onResourceAvailableCallback, onFailedCallback](...) {
         auto finInProgress= util::finally([this] { inProgress_ = false; });
 
         auto finHasMissedSignal = util::finally([this] {

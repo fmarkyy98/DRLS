@@ -9,29 +9,31 @@
 #include "persistence/User.h"
 
 int main(int argc, char** argv) {
-    common::EntityService::getInstance()->create<db::Administrator>()
+    auto entityService = common::EntityService::getInstance();
+
+    entityService->create<db::Administrator>()
         ->setUsername("admin")
         ->setFullName("Administrator");
 
-    auto aple       = common::EntityService::getInstance()->create<db::Fruit>()
+    auto aple       = entityService->create<db::Fruit>()
                           ->setName("Alma");
-    auto pear       = common::EntityService::getInstance()->create<db::Fruit>()
+    auto pear       = entityService->create<db::Fruit>()
                           ->setName("Körte");
-    auto strawberry = common::EntityService::getInstance()->create<db::Fruit>()
+    auto strawberry = entityService->create<db::Fruit>()
                           ->setName("Eper");
-    auto pineaple   = common::EntityService::getInstance()->create<db::Fruit>()
+    auto pineaple   = entityService->create<db::Fruit>()
                           ->setName("Ananász");
 
-    auto winnie = common::EntityService::getInstance()->create<db::User>()
+    auto winnie = entityService->create<db::User>()
                       ->setFirstName("Mici")
                       ->setLastName("Mackó");
-    auto piglet = common::EntityService::getInstance()->create<db::User>()
+    auto piglet = entityService->create<db::User>()
                       ->setFirstName("Félős")
                       ->setLastName("Malacka");
-    auto eeyore = common::EntityService::getInstance()->create<db::User>()
+    auto eeyore = entityService->create<db::User>()
                       ->setFirstName("Szomorú")
                       ->setLastName("Füles");
-    auto roo    = common::EntityService::getInstance()->create<db::User>()
+    auto roo    = entityService->create<db::User>()
                       ->setFirstName("Zsebi")
                       ->setLastName("Baba");
 

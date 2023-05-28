@@ -21,25 +21,12 @@ namespace db {
 
 namespace common {
 
-class EntityCache : std::enable_shared_from_this<EntityCache> {
+class EntityCache {
 public:
     static std::shared_ptr<EntityCache> getInstance();
 
 private:
     EntityCache() = default;
-
-    template<typename Entity_T>
-    requires std::is_base_of_v<db::Entity, Entity_T>
-    QList<std::shared_ptr<Entity_T>>& getListOfType() {
-        if constexpr (std::is_same_v<Entity_T, db::Administrator>)
-            return admins_;
-        if constexpr (std::is_same_v<Entity_T, db::Fruit>)
-            return fruits_;
-        if constexpr (std::is_same_v<Entity_T, db::User>)
-            return users_;
-
-        std::invalid_argument("Invalid template argument");
-    }
 
 public:
     template<typename Entity_T>
@@ -64,7 +51,7 @@ public:
             }
         }
         else if constexpr (std::is_same_v<Entity_T, db::User> &&
-                      std::is_same_v<Related_T, db::Fruit>)
+                           std::is_same_v<Related_T, db::Fruit>)
         {
             for (const auto& relation : fruitUserRelations_
                                         | std::views::filter([entity](std::pair<int, int> relation) {
@@ -175,6 +162,21 @@ public:
             }
         }
     }
+
+private:
+    template<typename Entity_T>
+    requires std::is_base_of_v<db::Entity, Entity_T>
+        QList<std::shared_ptr<Entity_T>>& getListOfType() {
+        if constexpr (std::is_same_v<Entity_T, db::Administrator>)
+            return admins_;
+        if constexpr (std::is_same_v<Entity_T, db::Fruit>)
+            return fruits_;
+        if constexpr (std::is_same_v<Entity_T, db::User>)
+            return users_;
+
+        std::invalid_argument("Invalid template argument");
+    }
+
 private:
     static std::shared_ptr<EntityCache> instance_;
 

@@ -45,7 +45,7 @@ public:
 protected:
     std::shared_ptr<common::EntityCache> entityCache_;
 
-    int id_;
+    const int id_;
 
 private:
     static constexpr EntityType entityType_ = EntityType::Entity;
