@@ -16,7 +16,7 @@ Annak ellenére, hogy valódi adatbázis nincs a projekt mögött, azt ORM réte
 
 \section{Projekt egyszerűsített osztálydiagramja}
 
-A projekt megannyi komponensének a függőségek szemléltetése szempontjából érdemes lehet UML-szerűen ábrázolni, a későbbiekben pedig külön külön lesznek részletezve az egyes komponensek.
+A projekt megannyi komponensének a függőségek szemléltetése szempontjából érdemes lehet UML-szerűen ábrázolni, a későbbiekben pedig külön-külön lesznek részletezve az egyes komponensek.
 
 \begin{figure}[H]
 	\centering
@@ -31,9 +31,9 @@ Az entitás réteg szerepe, hogy a programban a nyers SQL írás helyett C++ obj
 
 \subsection{Entitások}
 
-Az entitások olyan adatbázisrekordot leképező C++ objektumok, amelyek tartalmazzák az adatbázis rekord mezőit erősen típusos módon privát tagváltozóiban, ehhez pedig publikus getter és szetter van definiálva, hogy kényelmesen lehessen használni. Ezeket nevezzük triviális getternek és triviális szetternek.
+Az entitások olyan adatbázisrekordot leképező C++ objektumok, amelyek tartalmazzák az adatbázisrekord mezőit erősen típusos módon privát tagváltozóiban, ehhez pedig publikus getter és szetter van definiálva, hogy kényelmesen lehessen használni. Ezeket nevezzük triviális getternek és triviális szetternek.
 
-Ezek mellett vannak esetenként nem triviális getterek. Erre egy jó példa a felhasználók esetében, a teljes név lekérdezésére létrehozott getter. Ez a tulajdonság egy úgynevezett számított mezője az entitásnak. Ez azt jelenti, hogy adatbázis rekord szinten, illetve entitáson belüli privát adattag szinten sem létezik hozzá mező, viszont másik mezők alapján valamilyen módon megalkotható az adat, aminek a lekérdezése a triviális getterekével azonos szintaktikával történik. Ezekhez a nem triviális getterekhez nem létezik szetter mivel ezeknek nem lenne értelme.
+Ezek mellett vannak esetenként nem triviális getterek. Erre egy jó példa a felhasználók esetében, a teljes név lekérdezésére létrehozott getter. Ez a tulajdonság egy úgynevezett számított mezője az entitásnak. Ez azt jelenti, hogy adatbázisrekord szinten, illetve entitáson belüli privát adattag szinten sem létezik hozzá mező, viszont másik mezők alapján valamilyen módon megalkotható az adat, aminek a lekérdezése a triviális getterekével azonos szintaktikával történik. Ezekhez a nem triviális getterekhez nem létezik szetter mivel ezeknek nem lenne értelme.
 
 További fontos művelete egy entitásnak, hogy törölhető legyen szükség szerint. Erre a feladatra alkalmas egy paraméter nélküli közvetlenül az entitáson hívható remove művelet, ami eltávolítja azt.
 
@@ -49,7 +49,7 @@ Mivel az entitáson keresztül lehet módosítani azt, hogy mik a vele kapcsolat
 
 A One to One esetben az entitások közti reláció is getter és szetter szinten valósul meg szintaktikailag. Ha egy entitáshoz hozzá akarunk rendelni egy másikat csak odaadjuk a szetterének és az a háttérben felépíti a relációt köztük. A getter visszaadja a reláción keresztül az entitást akárcsak egy triviális getter tenné azt egy adattag esetében. Illetve ezek mellett még szükség van az eltávolítás lehetőségére is, ezt akár egy paraméter nélküli remove függvény készítésével is elérhetjük. Ezzel az implementációval le is fedtük ezt az esetet.
 
-A One To Many esetben a szettert felváltja egy add művelet, amivel a már meglévő relációkon túl egy újabbat hozhatunk létre, nem szüntetve meg és nem módosítva a meglévő relációink állapotát. A getterünk ebben az esetben nem pontosan egy darab entitást ad vissza, hanem egy listányit, mivel a több közül nem tudunk válogatni, nincs egy kimondottan jó elem, ezért az alapelv, hogy adjuk vissza az összeset. A relációk megszüntetésére itt két módszert is lehet használni. Az egyik a már korábban megismert remove függvény paraméterezhető verziója, hogy tudja az entitás, hogy a sok közül pontosan melyik entitáshoz kötődő relációját akarjuk lebontani. A Másik Módja ennek a clear függvény lesz, aminek segítségével minden relációt fel tudunk számolni paraméter átadás nélkül. Nézzünk meg erre egy példát publikus inteface kialakítás szintjén.
+A One To Many esetben a szettert felváltja egy add művelet, amivel a már meglévő relációkon túl egy újabbat hozhatunk létre, nem szüntetve meg és nem módosítva a meglévő relációink állapotát. A getterünk ebben az esetben nem pontosan egy darab entitást ad vissza, hanem egy listányit, mivel a több közül nem tudunk válogatni, nincs egy kimondottan jó elem, ezért az alapelv, hogy adjuk vissza az összeset. A relációk megszüntetésére itt két módszert is lehet használni. Az egyik a már korábban megismert remove függvény paraméterezhető verziója, hogy tudja az entitás, hogy a sok közül pontosan melyik entitáshoz kötődő relációját akarjuk lebontani. A másik módja ennek a clear függvény lesz, aminek segítségével minden relációt fel tudunk számolni paraméter átadás nélkül. Nézzünk meg erre egy példát publikus inteface kialakítás szintjén.
 
 \lstset{caption={User Entitás header file}, label=src:cpp}
 \begin{lstlisting}[language={C++}]
@@ -94,7 +94,7 @@ private:
 \end{lstlisting}
 
 A fentebb lévő kódrészletben jól elkülöníthetőek a korábban említett részek. Az osztálydefiníciót követően a 6. sortól a getterek, a 12. sorban a nem triviális getterek, a 14. sorban a szetterek, a 22. sortól a Many to Many gyümölcsökkel való relációt menedzselő eljárások, végül pedig, bár ez nem a publikus része az osztálynak, a member változóink láthatóak.
-A következő komponens bemutatása előtt figyeljük meg, hogy az entitások az Entity ősosztályból származnak le, ahogy az a 2. sorban is látszik. Ennek a ténynek az ismerete később még hasznos lesz. Az ok egyértelműen a futásiidejű polimorfizmus, aminek a segítségével nagy mennyiségű kód duplikáció elkerülésé vált megvalósíthatóvá, illetve az entitások polimorf módon történő tárolása is így került megvalósításra, parametrikus polimorfizmus\footnote{Programozási technika, amely során egy típusparamétertől tesszük függővé egy eljárás vagy egy osztály működését.} vagy type erasure\footnote{Programozási technika, amely során megszabadulunk egy változó típusától, hogy általános módon lehessen kezelni.} helyett.
+A következő komponens bemutatása előtt figyeljük meg, hogy az entitások az Entity ősosztályból származnak le, ahogy az a 2. sorban is látszik. Ennek a ténynek az ismerete később még hasznos lesz. Az ok egyértelműen a futásiidejű polimorfizmus, aminek a segítségével nagy mennyiségű kód duplikáció elkerülése vált megvalósíthatóvá, illetve az entitások polimorf módon történő tárolása is így került megvalósításra, parametrikus polimorfizmus\footnote{Programozási technika, amely során egy típusparamétertől tesszük függővé egy eljárás vagy egy osztály működését.} vagy type erasure\footnote{Programozási technika, amely során megszabadulunk egy változó típusától, hogy általános módon lehessen kezelni.} helyett.
 
 \subsection{EntityService}
 
@@ -102,7 +102,7 @@ Az entitások amellett, hogy képesek önállóan megannyi művelet elvégzésé
 
 Erre a jogosan megfogalmazódó problémára nyújt megoldást az EntityService nevű komponens.
 
-A létrehozásban segítségünkre lesz a create tagfüggvény, ami klasszikus értelemben véve paraméterek nélküli, viszont templateparaméterben átadható neki egy az Entity ősosztályból származó típus, aminek a megkonstruálása az EntityService feladata lesz majd visszaadja a megfelelő altípusú frissen létrehozott entitást. A visszatérési érték típusának is a templateargumentumot használja.
+A létrehozásban segítségünkre lesz a create tagfüggvény, ami klasszikus értelembe véve paraméterek nélküli, viszont templateparaméterben átadható neki egy az Entity ősosztályból származó típus, aminek a megkonstruálása az EntityService feladata lesz majd visszaadja a megfelelő altípusú frissen létrehozott entitást. A visszatérési érték típusának is a templateargumentumot használja.
 
 Ezek után, hogy tudunk entitásokat létrehozni a lekérdezésük válik a következő égető hiányossággá amire megoldásul az EntityService szintű gettereket bizonyultak a legkényelmesebb és legjobban használható megoldásnak. Ezek lettek a:
 
@@ -167,11 +167,11 @@ A fentebb lévő kódrészlet tartalmazza a már írásban taglalt függvénytem
 
 \subsection{EntityCache}
 
-A fentebbi részekben már kifejtésre került az entitásainkel végezhető műveletek, és az erre létrehozott osztályokat, service-eket. Ebben a részben Az entitásaink tárolásáról tudhatunk meg többet. Mivel a kipróbáló program adatbázis sémával rendelkezik, viszont tényleges adatbázis nincsen a program entitásrétege mögött, valamilyen in memory adatbázisleképezést kellett elkészíteni, hogy ez megfelelően prezentálható legyen, illetve mivel az entitások felépítése alapvetően egy erőforrásigényes folyamat egy gyorsítótár jellegű tároló elkészítése nagyban segíti az alkalmazás reszponzivitását. 
+A fentebbi részekben már kifejtésre került az entitásainkal végezhető műveletek, és az erre létrehozott osztályokat, service-eket. Ebben a részben az entitásaink tárolásáról tudhatunk meg többet. Mivel a kipróbáló program adatbázis sémával rendelkezik, viszont tényleges adatbázis nincsen a program entitásrétege mögött, valamilyen in memory adatbázisleképezést kellett elkészíteni, hogy ez megfelelően prezentálható legyen, illetve mivel az entitások felépítése alapvetően egy erőforrásigényes folyamat egy gyorsítótár jellegű tároló elkészítése nagyban segíti az alkalmazás reszponzivitását. 
 
-Emellet további és talán legfontosabb szerepe az, hogy az alkalmazásunkban ez a gyorsítótár biztosítja az entitásaink pointerintegritását. Ez azt jelenti, hogy ugyan azt az entitást ha lekérdezzük akkor a cache-ben lévő entitást csak egyezer kell megkonstruálni, onnantól kezdve az egész alkalmazásban ugyan azon az oobjektumot használja minden komponens attól függetlenül, hogy EntityService-en keresztül vagy egy konkrét entitások keresztül kéri le az adott objektumot.
+Emellet további és talán legfontosabb szerepe az, hogy az alkalmazásunkban ez a gyorsítótár biztosítja az entitásaink pointerintegritását. Ez azt jelenti, hogy ugyan azt az entitást ha lekérdezzük akkor a cache-ben lévő entitást csak egyszer kell megkonstruálni, onnantól kezdve az egész alkalmazásban ugyan azt az objektumot használja minden komponens attól függetlenül, hogy EntityService-en keresztül vagy egy konkrét entitáson keresztül kéri le az adott objektumot.
 
-Ebből is látszik, hogy az EntityCache nem közvetlenül használható a felhasználók, fejlesztők számára, hanem az inkább egy az EntityService, és entitás példányok függőségeként létrjövő, őket közvetlenül kiszolgáló segéd objektum. Ennek a célja hogy az Entitások tárolása és konténer objektumokból való visszakeresésének feladata ne az entitásokra háruljon, ezt inkább szervezzük ki egy különálló komponensbe ami dedikáltan csak ezt a feladatot látja el. Nézzük meg az EntityCache-t publikus interface szintjén:
+Ebből is látszik, hogy az EntityCache nem közvetlenül használható a felhasználók, fejlesztők számára, hanem az inkább egy az EntityService, és entitás példányok függőségeként létrjövő, őket közvetlenül kiszolgáló segéd objektum. Ennek a célja, hogy az Entitások tárolása és konténer objektumokból való visszakeresésének feladata ne az entitásokra háruljon, ezt inkább szervezzük ki egy különálló komponensbe, ami dedikáltan csak ezt a feladatot látja el. Nézzük meg az EntityCache-t publikus interface szintjén:
 
 \lstset{caption={EntityCache header file}, label=src:cpp}
 \begin{lstlisting}[language={C++}]
@@ -243,9 +243,9 @@ private:
 };
 \end{lstlisting}
 
-A fentebbi kódrészletben ismét jól látható módon jelenik meg a singleton tervezési minta. A 3. sorban lévő publikus getInstance felel az objektum lekérdezhetőségéről, és visszaadja az egyetlen objektumra mutató pointert. A 6. sorban lévő privát konstruktor felel az osztály egyetlen példányának megkonstruálásáért. Ez természetesen nem hívható kívülről. Az 58. sorban pedig látható a statikus instance ami az objektumot tárolja.
+A fentebbi kódrészletben ismét jól látható módon jelenik meg a singleton tervezési minta. A 3. sorban lévő publikus getInstance felel az objektum lekérdezhetőségéről, és visszaadja az egyetlen objektumra mutató pointert. A 6. sorban lévő privát konstruktor felel az osztály egyetlen példányának megkonstruálásáért. Ez természetesen nem hívható kívülről. Az 58. sorban pedig látható a statikus instance, ami az objektumot tárolja.
 
-Ezek után következnek a service lényegi részei. Mivel az osztály minden típusú entitáshoz generikusan kell, hogy működjön egy igen masszív template definíviókkal ellátott osztály törsz fog következni de minden függvény indokoltan használja ezt a nyelvi elemet.
+Ezek után következnek a service lényegi részei. Mivel az osztály minden típusú entitáshoz generikusan kell, hogy működjön egy igen masszív template definíciókkal ellátott osztály törsz fog következni de minden függvény indokoltan használja ezt a nyelvi elemet.
 
 A \textbf{getCached} paraméter nélküli függvény. Templateargumentumában egy Entitás altípust kap. Elvárt működése a kapott típusnak megfelelő összes entitást tartalmazó kollekció érték szerinti visszaadása.
 
@@ -255,15 +255,15 @@ A \textbf{cache} egy paraméterrel rendelkező függvény ami egy entitás péld
 
 A \textbf{remove} egy paraméterrel rendelkező függvény, ami egy entitás példányt kap. Templateargumentumában egy Entitás altípust kap, ez megegyezik a paraméterének típusával. Elvárt működése a kapott entitás kitörlése az azt tartalmazó kollekcióból, és annak destruálása.
 
-A \textbf{link} kettő paraméterrel rendelkező függvény, ami két entitás pédányt kap. Templateargumentumában két Entitás altípust kap, ez megegyezik a paraméterének tapott entitások típusával. Elvárt működése a kapott entitások közötti reláció kialakítása.
+A \textbf{link} kettő paraméterrel rendelkező függvény, ami két entitás pédányt kap. Templateargumentumában két Entitás altípust kap, ez megegyezik a paraméterének kapott entitások típusával. Elvárt működése a kapott entitások közötti reláció kialakítása.
 
 A \textbf{unlink} kettő paraméterrel rendelkező függvény, ami két entitás pédányt kap. Templateargumentumában két Entitás altípust kap, ezek megegyeznek a paraméterének kapott entitások típusával. Elvárt működése a kapott entitások közötti reláció megszüntetése.
 
-A \textbf{clearLinksOf} egy paraméterrel rendelkező függvény ami egy entitás pédányt kap. Templateargumentumában két Entitás altípust kap, az első megegyezik a paraméterének kapott entitások típusával, a másik szintén egy Entitás altípus. Elvárt működése a kapott entitás összes relációjának megszüntetése a templétargumentumként kapott másik entitástípus összes példányával.
+A \textbf{clearLinksOf} egy paraméterrel rendelkező függvény, ami egy entitás pédányt kap. Templateargumentumában két Entitás altípust kap, az első megegyezik a paraméterének kapott entitások típusával, a másik szintén egy Entitás altípus. Elvárt működése a kapott entitás összes relációjának megszüntetése a templétargumentumként kapott másik entitástípus összes példányával.
 
 A forráskód privát szekciójában, a 61. sortól kezdve, láthatóak az entitásokat tartalmazó kollekciók, illetve, a 65. sortól, az egyes entitás típusok közötti relációkat tartalmazó konténerek.
 
-\subsection{Az entitásréteg interakcióji a komponensek között}
+\subsection{Az entitásréteg interakciói a komponensek között}
 
 A következő részekben nézzünk meg néhány érdekes interakciót a korábban megismert Entitás réteg komponensei között. Először vessünk egy pillantást az Entitások létrehozásának folyamatára.
 
@@ -273,7 +273,7 @@ auto aple = entityService->create<db::Fruit>()
                 ->setName("Alma");
 \end{lstlisting}
 
-A fentebbi mintakódban az látható, ahogy az EntityService segítségével létrehozunk egy Gyümölcs entitást, majd ennek az entitásnak beállítjuk a név tulajdonságát a az Alma szöveges literálra, és végül az egész kifejezés kiértékelése után a visszatérési értéket berakjuk egy aple nevű változóba. Nézzük meg, hogy az egyes részek miként működnek és pontosan merre jár a vezérlés ennek az igen kényelmesen használható, intuitív kódrészlet kiértékelése közben.
+A fentebbi mintakódban az látható, ahogy az EntityService segítségével létrehozunk egy Gyümölcs entitást, majd ennek az entitásnak beállítjuk a név tulajdonságát az Alma szöveges literálra, és végül az egész kifejezés kiértékelése után a visszatérési értéket berakjuk egy aple nevű változóba. Nézzük meg, hogy az egyes részek miként működnek és pontosan merre jár a vezérlés ennek az igen kényelmesen használható, intuitív kódrészlet kiértékelése közben.
 Az első kiértékelésre kerülő kifejezés az entityService objektum példányon meghívott create utasítás lesz.
 
 \lstset{caption={Create belső működése}, label=src:cpp}
@@ -293,7 +293,7 @@ Fruit::Fruit()
 {}
 \end{lstlisting}
 
-Itt a konstruktor létrehozza az entitást, és meghívja az ősének az Entity-nek a konstruktorát, aminek továbbadja a nextId\_ nevű statikus változót, rögtön ez követően meg is növelve azt. Ennek segítségével érhető el az entitások Id-jának inkrementális növelése. Ezt követi az Entity konstruktora.
+Itt a konstruktor létrehozza az entitást, és meghívja az ősének az Entity-nek a konstruktorát, aminek továbbadja a nextId\_ nevű statikus változót, rögtön ezt követően meg is növelve azt. Ennek segítségével érhető el az entitások Id-jának inkrementális növelése. Ezt követi az Entity konstruktora.
 
 \lstset{caption={Entity belső működése}, label=src:cpp}
 \begin{lstlisting}[language={C++}]
@@ -318,9 +318,9 @@ std::shared_ptr<Entity_T> cache(Entity_T* entityRawPtr) {
 }
 \end{lstlisting}
 
-Itt pedig megtörténik a már korábban megismert függvény feladatának beteljesítése, ami az entitás feletti ownership kialakítása, és eltárolása. Ez technikailag egy std::shared\_ptr használatával teszi meg. Az erről készített másolat bekerül a belső kollekcióban ami a templateargumentum alapján kerül kiválasztásra a getListOfType privát függvény segítségével. Ezt követően a függvény visszatér az eredeti pointer-rel és bezárul a kör.
+Itt pedig megtörténik a már korábban megismert függvény feladatának beteljesítése, ami az entitás feletti ownership kialakítása, és eltárolása. Ez technikailag egy std::shared\_ptr használatával teszi meg. Az erről készített másolat bekerül a belső kollekcióba, ami a templateargumentum alapján kerül kiválasztásra a getListOfType privát függvény segítségével. Ezt követően a függvény visszatér az eredeti pointer-rel és bezárul a kör.
 
-A vezérlésünk visszatér a vermünk felszínére ahol a következő utasítás a már megkonstruált entitás nevének beállítása. Ez itt Már természetesen a Fruit entitás egyik szettere lesz.
+A vezérlésünk visszatér a vermünk felszínére, ahol a következő utasítás a már megkonstruált entitás nevének beállítása. Ez itt már természetesen a Fruit entitás egyik szettere lesz.
 
 \lstset{caption={Fruit belső működése}, label=src:cpp}
 \begin{lstlisting}[language={C++}]
@@ -331,23 +331,23 @@ std::shared_ptr<db::Fruit> Fruit::setName(const QString& name) {
 }
 \end{lstlisting}
 
-Itt egy triviális settert láthatunk egy Builder tervezési mintával ellátva amiben annyi plusz csavar van, hogy a builder a this-t referencia helyett egy std::shared\_ptr-be csomagolva adja vissza. Ennek köszönhető, hogy a hívó fél a szetter használata után is értékül adhatja egy változónak az entitását.
+Itt egy triviális szettert láthatunk egy Builder tervezési mintával ellátva, amiben annyi plusz csavar van, hogy a builder a this-t referencia helyett egy std::shared\_ptr-be csomagolva adja vissza. Ennek köszönhető, hogy a hívó fél a szetter használata után is értékül adhatja egy változónak az entitását.
 
 Ezt ki is használva a teljes kifejezés visszatérési értékét odaadjuk a változónak és ezzel létre is jött az Alma nevű Gyümölcs típusú entitás.
 
 \section{Delayed resource lock service}
 
-A fentebb leírt eszközök működése mellett felmerülhetnek további olyan problémák, amikre ez az eszköztár nem nyújt teljes körű megoldást. Az egyik ilyen Felhasználói eset például, ha egy folyamatot meg akarunk várakoztatni az erőforrások elérhetetlensége miatt akkor erre nemigazán van jó módszer, illetve az erőforrásoknak nem tájékozódunk a felszabadulásáról ezért az, hogy mennyi időt kell várni azt valamilyen módon a felhasználónak kell kitalálnia. A DelayedResourceLockService ennek a kimondott esetnek a kezelésére lett megalkotva. 
+A fentebb leírt eszközök működése mellett felmerülhetnek további olyan problémák, amikre ez az eszköztár nem nyújt teljes körű megoldást. Az egyik ilyen felhasználói eset például, ha egy folyamatot meg akarunk várakoztatni az erőforrások elérhetetlensége miatt, akkor erre nemigazán van jó módszer, illetve az erőforrásoknak nem tájékozódunk a felszabadulásáról ezért az, hogy mennyi időt kell várni azt valamilyen módon a felhasználónak kell kitalálnia. A DelayedResourceLockService ennek a kimondott esetnek a kezelésére lett megalkotva. 
 
-Abban az esetben, ha a folyamat jellege miatt nem érdekes, hogy mikor lesz elvégezve csak az a célunk, hogy előbb utóbb a végrehajtás történjen meg A DelayedResourceLockService lesz a jó választás. A service egy teljesen a felhasználótól függő névtelen függvényt kap paraméterül, és egy halmaznyi lefoglalandó erőforrást, ami a folyamat elvégzéséhez szükségesek. A működése egyszerű, igazából kettő fő esetre lehet szétválasztani.
+Abban az esetben, ha a folyamat jellege miatt nem érdekes, hogy mikor lesz elvégezve csak az a célunk, hogy előbb-utóbb a végrehajtás történjen meg A DelayedResourceLockService lesz a jó választás. A service egy teljesen a felhasználótól függő névtelen függvényt kap paraméterül, és egy halmaznyi lefoglalandó erőforrást, amik a folyamat elvégzéséhez szükségesek. A működése egyszerű, igazából kettő fő esetre lehet szétválasztani.
 
-Az első eset az amikor a folyamat által igényelt paraméterül átadott erőforrások elérhetőek. Ekkor ezek gond nélkül lefoglalásra kerülnek, a zár birtokbavétele megtörténik. Ezt követően A folyamat lezajlik, ennek végeztével az erőforrások felszabadulnak. Ez az eset ekvivalens a ResourceLockService azon esetével amikor az erőforrások lefoglalása megtörténik. Ez egyébként a tervezés során elvárt viselkedés is volt.
+Az első eset az, amikor a folyamat által igényelt paraméterül átadott erőforrások elérhetőek. Ekkor ezek gond nélkül lefoglalásra kerülnek, a zár birtokbavétele megtörténik. Ezt követően a folyamat lezajlik, ennek végeztével az erőforrások felszabadulnak. Ez az eset ekvivalens a ResourceLockService azon esetével, amikor az erőforrások lefoglalása megtörténik. Ez egyébként a tervezés során elvárt viselkedés is volt.
 
-A másik eset amikor a szükséges resourcok lefoglalása valamilyen hibára fut, természetesen ez csak azt jelenti, hogy más éppen dolgozik azokkal. Ekkor a felhasználótól paraméterben kapott névtelen függvény az erőforrásokkal együtt bekerül egy várakoztatási sorba. Új szál nem indul ezekkel egyidejűleg, hogy ez ne csökkentse a thread pool-ban lévő használható szálak mennyiségét. Ebből a várakoztatási sorból az elemek 2 féleképpen kerülhetnek ki.
+A másik eset, amikor a szükséges resource-ok lefoglalása valamilyen hibára fut, természetesen ez csak azt jelenti, hogy más éppen dolgozik azokkal. Ekkor a felhasználótól paraméterben kapott névtelen függvény az erőforrásokkal együtt bekerül egy várakoztatási sorba. Új szál nem indul ezekkel egyidejűleg, hogy ez ne csökkentse a thread pool-ban lévő használható szálak mennyiségét. Ebből a várakoztatási sorból az elemek kettő féleképpen kerülhetnek ki.
 
-Az egyik módja, ha a ResourceLockService elemmitál egy szignált, ez jelzést ad arról, hogy az eddigi lefoglalt resourcok halmaza megváltozott. Erre a jelzésre figyelve a DelayedResourceLockService végig iterál a várakoztatási soron, és megkísérli az újonnan felszabadult erőforrásoknak megfelelő elemeket lefuttatni. Amennyiben ez sikeresen lezajlik, a folyamat lezajlott az elem kikerül a várakoztatási sorból. A bennmaradó elemeken ismét végig iterálunk a jelzések érkezésével, így fokozatosan elfogyasztva a lista teljes tartalmát.
+Az egyik módja, ha a ResourceLockService elemmitál egy szignált, ez jelzést ad arról, hogy az eddigi lefoglalt resource-ok halmaza megváltozott. Erre a jelzésre figyelve a DelayedResourceLockService végig iterál a várakoztatási soron, és megkísérli az újonnan felszabadult erőforrásoknak megfelelő elemeket lefuttatni. Amennyiben ez sikeresen lezajlik, a folyamat befejeződött az elem kikerül a várakoztatási sorból. A bennmaradó elemeken ismét végig iterálunk a jelzések érkezésével, így fokozatosan elfogyasztva a lista teljes tartalmát.
 
-A másik módja az elemek listából való eltávolításának az, ha az elem által igényelt erőforrások nem szabadulnak fel az elemnek megadott időtúllépési limit tartalma alatt. Az elemeknek meghatározható a felhasználó által egy maximális időkorlát amíg bennmaradhat egy elem a várakoztatási sorban. Amint a várakoztatási sorban töltött idő átlépi a maximálisan dedikált időt a feladat elvégzésére, a feladat az időtúllépési státuszba lép. Ekkor a feladat végrehajtása nem valósul meg, A várakoztatási sorból kikerül a végrehajtás nélkül.
+A másik módja az elemek listából való eltávolításának az, ha az elem által igényelt erőforrások nem szabadulnak fel az elemnek megadott időtúllépési limit tartalma alatt. Az elemeknek meghatározható a felhasználó által egy maximális időkorlát amíg bennmaradhat egy elem a várakoztatási sorban. Amint a várakoztatási sorban töltött idő átlépi a maximálisan dedikált időt a feladat elvégzésére, a feladat az időtúllépési státuszba lép. Ekkor a feladat végrehajtása nem valósul meg, a várakoztatási sorból kikerül, végrehajtás nélkül.
 
 Tipikus példája ez a kiéheztetésnek és ez a mechanizmus az örökké várakozó folyamatok beragadását hivatott elkerülni. De mit tudunk tenni abban az esetben, ha a folyamatunkat kiéheztették? Erre a kérdésre is a komponens felhasználója kell, hogy fel legyen készülve hisz a komponens csak a folyamatok megvárakoztatásáért és végrehajtásáért felel. Ha egy folyamat kiéheztetése megtörténik akkor az a hatáskörén kívül eső probléma, ami ennél jóval mélyebben is gyökerezhet. A felhasználó erre gondolva adhat egy opcionális paraméterként egy időtúllépés esetén lefuttatandó folyamatot. Ebben megkísérelhet tenni a kiéheztetést végző folyamatok ellen vagy logot helyezhet el a hibajelenség detektálhatóságának érdekében és későbbi javíthatóságának megkönnyítéséért. Az a program, ami kiéhezteti a saját folyamatait eleve rosszul működik tehát ez a rész igazából egy megoldás a végső esetre, de jobb, hogyha van és sosincs kihasználva, mintha nem lenne és egyszer egy ilyen jellegű hiba felmerülése során egy jóval nagyobb kódbázist kell kielemezni a hiba helyének feltárása érdekében.
 
@@ -355,7 +355,7 @@ Nézzük meg az osztályt kicsit technikaibb szemmel, hogy a működések hátte
 
 \subsection{Függőségek}
 
-A komponens explicit függőségei az AsyncTaskService az aszinkron folyamatok kezelésére hivatott komponens, és a ResourceLockService ami segítségével az erőforrások lefoglalását végzi a komponens. Ezeket konstruktorparaméterben kapja.
+A komponens explicit függőségei az AsyncTaskService az aszinkron folyamatok kezelésére hivatott komponens, és a ResourceLockService, ami segítségével az erőforrások lefoglalását végzi a komponens. Ezeket konstruktorparaméterben kapja.
 
 \subsection{Belső típusok}
 
@@ -377,7 +377,7 @@ Itt látható a felhasználó által megadott task, az erőforrások map-je, és
 
 \subsection{Tagváltozók}
 
-A tagváltozóink között az osztályunk két függősége mellett egy lista látható, ami AsyncLock belső típussal rendelkező elemeket tárol. Ez a technikai implementációja a várakoztatási sornak. Közvetlenül alatta látható egy std::mutex aminek a szerepe a lista szinkronizációja. A lista akár egyszerre több szálból is módosulhat. A lehetséges racecondition-ök elkerülése végett a lista minden művelete lelokkolja a mutexet az implementációban. Alatta található két std::atomic-ba wrapp-elt logikai érték, ezek szerepe a lista feldolgozása során van.
+A tagváltozóink között az osztályunk két függősége mellett egy lista látható, ami AsyncLock belső típussal rendelkező elemeket tárol. Ez a technikai implementációja a várakoztatási sornak. Közvetlenül alatta látható egy std::mutex, aminek a szerepe a lista szinkronizációja. A lista akár egyszerre több szálból is módosulhat. A lehetséges racecondition-ök elkerülése végett a lista minden művelete lelokkolja a mutexet az implementációban. Alatta található két std::atomic-ba wrapp-elt logikai érték, ezek szerepe a lista feldolgozása során van.
 
 \lstset{caption={Tagváltozók}, label=src:cpp}
 \begin{lstlisting}[language={C++}]
@@ -399,9 +399,9 @@ Az első paraméter az adminisztrátor szintű hívás esetén egy CalleContext 
 
 A második paraméter a már korábban megismert LockableResource kulcsokhoz ResourceLockType kulcsaikat rendelő map, ez itt is a lefoglalandó erőforrásokat és azok írási vagy olvasási típusú zárolásának többletadatát hordozza.
 
-A harmadik paraméter a természetesen a task aminek az elvégzéséhez a második paraméterben átadott erőforrások szükségesek. 
+A harmadik paraméter természetesen a task, aminek az elvégzéséhez a második paraméterben átadott erőforrások szükségesek. 
 
-A negyedik paraméter egy időtúllépési korlát, amit milliszekundumban adhatunk meg. Ezzel megszabhatjuk, hogy a Folyamat által igényelt, második paraméterként átadott erőforrások, rendelkezésre nem állásának állapota maximálisan mennyi ideig fogadható el a feladat elvégzésének szempontjából. Fontos, hogy ez az időtúllépés csak a várakozásra vonatkozik, ha a folyamat már elkezdődött akkor, a futásának ideje nem számít bele az időtúllépésnek megszabott felső határba, tartson bármilyen sokáig.
+A negyedik paraméter egy időtúllépési korlát, amit milliszekundumban adhatunk meg. Ezzel megszabhatjuk, hogy a folyamat által igényelt, második paraméterként átadott erőforrások, rendelkezésre nem állásának állapota maximálisan mennyi ideig fogadható el a feladat elvégzésének szempontjából. Fontos, hogy ez az időtúllépés csak a várakozásra vonatkozik, ha a folyamat már elkezdődött akkor, a futásának ideje nem számít bele az időtúllépésnek megszabott felső határba, tartson bármilyen sokáig.
 
 Ezt követően következik az utolsó paraméter, ami egyben az első opcionális paraméter, az időtúllépési task. Ez akkor fut le, ha a kijelölt milliszekundumnyi idő alatt nem sikerül az erőforrások lefoglalása.
 
